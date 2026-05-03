@@ -1,0 +1,11 @@
+quiet: false
+disable-version-string: true
+with-expecter: true
+packages:
+  skill-manager/internal/usecase:
+    interfaces:
+      SkillRepository:
+      ProjectRepository:
+      ActivationRepository:
+      AgentAdapter:
+      ProjectScanner:
