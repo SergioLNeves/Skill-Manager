@@ -55,7 +55,7 @@ func (r *ProjectRepository) GetByID(ctx context.Context, id string) (domain.Proj
 	row := r.db.QueryRowContext(ctx,
 		`SELECT id, name, path, added_at FROM projects WHERE id = ?`, id)
 
-	p, err := scanProjectRow(row)
+	p, err := scanProject(row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.Project{}, domain.ErrProjectNotFound
@@ -137,28 +137,15 @@ func (r *ProjectRepository) loadAgents(ctx context.Context, projectID string) ([
 	return agents, rows.Err()
 }
 
-type projectScanner interface {
+// rowScanner is satisfied by both *sql.Rows and *sql.Row.
+type rowScanner interface {
 	Scan(dest ...any) error
 }
 
-func scanProject(s projectScanner) (domain.Project, error) {
+func scanProject(s rowScanner) (domain.Project, error) {
 	var p domain.Project
 	var addedAt string
 	if err := s.Scan(&p.ID, &p.Name, &p.Path, &addedAt); err != nil {
-		return domain.Project{}, err
-	}
-	t, err := time.Parse(time.RFC3339, addedAt)
-	if err != nil {
-		return domain.Project{}, fmt.Errorf("parse added_at %q: %w", addedAt, err)
-	}
-	p.AddedAt = t
-	return p, nil
-}
-
-func scanProjectRow(row *sql.Row) (domain.Project, error) {
-	var p domain.Project
-	var addedAt string
-	if err := row.Scan(&p.ID, &p.Name, &p.Path, &addedAt); err != nil {
 		return domain.Project{}, err
 	}
 	t, err := time.Parse(time.RFC3339, addedAt)

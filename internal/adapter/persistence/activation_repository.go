@@ -22,7 +22,7 @@ func NewActivationRepository(db *sql.DB) *ActivationRepository {
 
 func (r *ActivationRepository) List(ctx context.Context, f usecase.ActivationFilter) ([]domain.Activation, error) {
 	q := `SELECT id, skill_id, agent, scope, project_id, applied_at FROM activations WHERE 1=1`
-	args := []any{}
+	var args []any
 
 	if f.SkillID != "" {
 		q += " AND skill_id = ?"
@@ -83,9 +83,13 @@ func (r *ActivationRepository) Save(ctx context.Context, a domain.Activation) (d
 }
 
 func (r *ActivationRepository) Delete(ctx context.Context, id int64) error {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM activations WHERE id = ?`, id)
+	res, err := r.db.ExecContext(ctx, `DELETE FROM activations WHERE id = ?`, id)
 	if err != nil {
 		return fmt.Errorf("activation repo: delete %d: %w", id, err)
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return domain.ErrActivationNotFound
 	}
 	return nil
 }

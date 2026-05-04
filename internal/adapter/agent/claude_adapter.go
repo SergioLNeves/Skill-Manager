@@ -16,16 +16,12 @@ import (
 // Project path: <project>/.claude/skills/<skill-name> → <skill-path>
 type ClaudeAdapter struct {
 	homeDir string
-	symlink *filesystem.SymlinkManager
 }
 
 // NewClaudeAdapter creates a ClaudeAdapter.
 // homeDir should be the user's home directory (os.UserHomeDir()).
 func NewClaudeAdapter(homeDir string) *ClaudeAdapter {
-	return &ClaudeAdapter{
-		homeDir: homeDir,
-		symlink: filesystem.NewSymlinkManager(""),
-	}
+	return &ClaudeAdapter{homeDir: homeDir}
 }
 
 func (a *ClaudeAdapter) Agent() domain.Agent {

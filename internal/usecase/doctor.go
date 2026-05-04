@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"skill-manager/internal/domain"
 )
@@ -170,8 +169,3 @@ func (uc *Doctor) checkProjectPaths(ctx context.Context, report *DoctorReport) e
 	return nil
 }
 
-// hasCopilotMarkers checks whether a file contains both managed block markers.
-func hasCopilotMarkers(content string) bool {
-	return strings.Contains(content, "<!-- skills-manager:start -->") &&
-		strings.Contains(content, "<!-- skills-manager:end -->")
-}

@@ -31,11 +31,11 @@ func NewDeactivateSkill(
 }
 
 func (uc *DeactivateSkill) Execute(ctx context.Context, activationID int64) error {
+	// Fetch first so we know agent/scope/projectID for reapply before deleting.
 	all, err := uc.activations.List(ctx, ActivationFilter{})
 	if err != nil {
 		return fmt.Errorf("deactivate skill: list activations: %w", err)
 	}
-
 	var target *domain.Activation
 	for i := range all {
 		if all[i].ID == activationID {
@@ -50,11 +50,9 @@ func (uc *DeactivateSkill) Execute(ctx context.Context, activationID int64) erro
 	if err := uc.activations.Delete(ctx, activationID); err != nil {
 		return fmt.Errorf("deactivate skill: delete activation: %w", err)
 	}
-
 	if err := uc.reapply(ctx, target); err != nil {
 		return fmt.Errorf("deactivate skill: reapply adapter: %w", err)
 	}
-
 	return nil
 }
 

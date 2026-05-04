@@ -118,54 +118,94 @@ func (a *App) SaveSettings(s config.Settings) error {
 	return nil
 }
 
+func (a *App) ready() error {
+	if a.container == nil {
+		return fmt.Errorf("app not initialized: check logs for startup errors")
+	}
+	return nil
+}
+
 // --- Skills ---
 
 func (a *App) ListSkills() ([]binding.SkillDTO, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
 	return a.container.Skills.List(a.ctx)
 }
 
 // --- Projects ---
 
 func (a *App) ListProjects() ([]binding.ProjectDTO, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
 	return a.container.Projects.List(a.ctx)
 }
 
 func (a *App) RegisterProject(req binding.RegisterProjectRequestDTO) (binding.ProjectDTO, error) {
+	if err := a.ready(); err != nil {
+		return binding.ProjectDTO{}, err
+	}
 	return a.container.Projects.RegisterManual(a.ctx, req)
 }
 
 func (a *App) ScanCandidates(roots []string) ([]binding.ProjectCandidateDTO, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
 	return a.container.Projects.ScanCandidates(a.ctx, roots)
 }
 
 func (a *App) ConfirmCandidate(candidate binding.ProjectCandidateDTO) (binding.ProjectDTO, error) {
+	if err := a.ready(); err != nil {
+		return binding.ProjectDTO{}, err
+	}
 	return a.container.Projects.ConfirmCandidate(a.ctx, candidate)
 }
 
 func (a *App) DeleteProject(id string) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
 	return a.container.Projects.Delete(a.ctx, id)
 }
 
 // --- Activations ---
 
 func (a *App) ListActivations(filter binding.ActivationFilterDTO) ([]binding.ActivationDTO, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
 	return a.container.Activations.List(a.ctx, filter)
 }
 
 func (a *App) Activate(req binding.ActivateRequestDTO) (binding.ActivateResultDTO, error) {
+	if err := a.ready(); err != nil {
+		return binding.ActivateResultDTO{}, err
+	}
 	return a.container.Activations.Activate(a.ctx, req)
 }
 
 func (a *App) Deactivate(id int64) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
 	return a.container.Activations.Deactivate(a.ctx, id)
 }
 
 func (a *App) ResolveConflict(req binding.ResolveConflictRequestDTO) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
 	return a.container.Activations.ResolveConflict(a.ctx, req)
 }
 
 // --- Doctor ---
 
 func (a *App) RunDoctor() (binding.DoctorReportDTO, error) {
+	if err := a.ready(); err != nil {
+		return binding.DoctorReportDTO{}, err
+	}
 	return a.container.Doctor.Run(a.ctx)
 }
