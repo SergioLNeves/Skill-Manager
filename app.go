@@ -9,7 +9,8 @@ import (
 	"skill-manager/internal/di"
 )
 
-// App is the Wails application struct. Its public methods are exposed to the frontend.
+// App is the Wails application struct.
+// All public methods are exposed to the frontend via the generated wailsjs bindings.
 type App struct {
 	ctx       context.Context
 	container *di.Container
@@ -27,8 +28,7 @@ func (a *App) startup(ctx context.Context) {
 		fmt.Fprintf(os.Stderr, "skills-manager: resolve paths: %v\n", err)
 		return
 	}
-
-	if err := os.MkdirAll(skillsHome, 0o755); err != nil {
+	if err = os.MkdirAll(skillsHome, 0o755); err != nil {
 		fmt.Fprintf(os.Stderr, "skills-manager: mkdir skills home: %v\n", err)
 		return
 	}
@@ -47,22 +47,54 @@ func (a *App) shutdown(_ context.Context) {
 	}
 }
 
-// Skills returns the skills binding for Wails method exposure.
-func (a *App) Skills() *binding.SkillsBinding {
-	return a.container.Skills
+// --- Skills ---
+
+func (a *App) ListSkills() ([]binding.SkillDTO, error) {
+	return a.container.Skills.List(a.ctx)
 }
 
-// Projects returns the projects binding.
-func (a *App) Projects() *binding.ProjectsBinding {
-	return a.container.Projects
+// --- Projects ---
+
+func (a *App) ListProjects() ([]binding.ProjectDTO, error) {
+	return a.container.Projects.List(a.ctx)
 }
 
-// Activations returns the activation binding.
-func (a *App) Activations() *binding.ActivationBinding {
-	return a.container.Activations
+func (a *App) RegisterProject(req binding.RegisterProjectRequestDTO) (binding.ProjectDTO, error) {
+	return a.container.Projects.RegisterManual(a.ctx, req)
 }
 
-// Doctor returns the doctor binding.
-func (a *App) Doctor() *binding.DoctorBinding {
-	return a.container.Doctor
+func (a *App) ScanCandidates(roots []string) ([]binding.ProjectCandidateDTO, error) {
+	return a.container.Projects.ScanCandidates(a.ctx, roots)
+}
+
+func (a *App) ConfirmCandidate(candidate binding.ProjectCandidateDTO) (binding.ProjectDTO, error) {
+	return a.container.Projects.ConfirmCandidate(a.ctx, candidate)
+}
+
+func (a *App) DeleteProject(id string) error {
+	return a.container.Projects.Delete(a.ctx, id)
+}
+
+// --- Activations ---
+
+func (a *App) ListActivations(filter binding.ActivationFilterDTO) ([]binding.ActivationDTO, error) {
+	return a.container.Activations.List(a.ctx, filter)
+}
+
+func (a *App) Activate(req binding.ActivateRequestDTO) (binding.ActivateResultDTO, error) {
+	return a.container.Activations.Activate(a.ctx, req)
+}
+
+func (a *App) Deactivate(id int64) error {
+	return a.container.Activations.Deactivate(a.ctx, id)
+}
+
+func (a *App) ResolveConflict(req binding.ResolveConflictRequestDTO) error {
+	return a.container.Activations.ResolveConflict(a.ctx, req)
+}
+
+// --- Doctor ---
+
+func (a *App) RunDoctor() (binding.DoctorReportDTO, error) {
+	return a.container.Doctor.Run(a.ctx)
 }
