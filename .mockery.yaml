@@ -1,0 +1,8 @@
+packages:
+  skill-manager/internal/usecase:
+    interfaces:
+      SkillRepository:
+      ProjectRepository:
+      ActivationRepository:
+      AgentAdapter:
+      ProjectScanner:
