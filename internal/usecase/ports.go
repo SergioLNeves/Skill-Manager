@@ -6,10 +6,16 @@ import (
 	"skill-manager/internal/domain"
 )
 
-// SkillRepository reads skills from the central repository.
+// SkillRepository reads global skills from configured source directories.
 type SkillRepository interface {
 	List(ctx context.Context) ([]domain.Skill, error)
 	GetByID(ctx context.Context, id string) (domain.Skill, error)
+}
+
+// ProjectSkillRepository discovers skills that live inside a project directory.
+type ProjectSkillRepository interface {
+	ListByProject(ctx context.Context, project domain.Project) ([]domain.Skill, error)
+	GetByID(ctx context.Context, id string, project domain.Project) (domain.Skill, error)
 }
 
 // ProjectRepository persists registered projects.
@@ -58,9 +64,12 @@ type ProjectScanner interface {
 
 // DoctorIssue describes a detected inconsistency.
 type DoctorIssue struct {
-	Kind    string
-	Detail  string
-	Fixable bool
+	Kind     string            // machine-readable category
+	Title    string            // short human-readable title
+	Detail   string            // full description of what is wrong
+	HowToFix string            // what the auto-fix will do
+	Fixable  bool
+	FixData  map[string]string // data needed to execute the fix
 }
 
 // DoctorReport is the result of a health check run.

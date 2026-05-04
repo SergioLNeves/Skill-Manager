@@ -7,6 +7,7 @@ import {
 import { api } from './bindings'
 import type {
   Skill,
+  AggregatedSkill,
   Project,
   ProjectCandidate,
   Activation,
@@ -16,10 +17,15 @@ import type {
   ResolveConflictRequest,
   RegisterProjectRequest,
   DoctorReport,
+  DoctorIssue,
+  CopySkillRequest,
+  DeleteSkillRequest,
 } from '@/types'
 
 export const keys = {
   skills: ['skills'] as const,
+  allSkills: ['skills', 'all'] as const,
+  projectSkills: (projectId: string) => ['skills', 'project', projectId] as const,
   projects: ['projects'] as const,
   activations: (filter?: ActivationFilter) =>
     filter ? ['activations', filter] : (['activations'] as const),
@@ -30,6 +36,41 @@ export const keys = {
 
 export function useSkills(): UseQueryResult<Skill[]> {
   return useQuery({ queryKey: keys.skills, queryFn: api.listSkills })
+}
+
+export function useAllSkills(): UseQueryResult<AggregatedSkill[]> {
+  return useQuery({ queryKey: keys.allSkills, queryFn: api.listAllSkills })
+}
+
+export function useCopySkill() {
+  const qc = useQueryClient()
+  return useMutation<void, Error, CopySkillRequest>({
+    mutationFn: api.copySkill,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.allSkills })
+      qc.invalidateQueries({ queryKey: ['skills', 'project'] })
+    },
+  })
+}
+
+export function useDeleteSkill() {
+  const qc = useQueryClient()
+  return useMutation<void, Error, DeleteSkillRequest>({
+    mutationFn: api.deleteSkill,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.allSkills })
+      qc.invalidateQueries({ queryKey: ['skills', 'project'] })
+      qc.invalidateQueries({ queryKey: keys.activations() })
+    },
+  })
+}
+
+export function useProjectSkills(projectId: string): UseQueryResult<Skill[]> {
+  return useQuery({
+    queryKey: keys.projectSkills(projectId),
+    queryFn: () => api.listProjectSkills(projectId),
+    enabled: !!projectId,
+  })
 }
 
 // --- Projects ---
@@ -121,5 +162,13 @@ export function useRunDoctor() {
   return useMutation<DoctorReport, Error>({
     mutationFn: api.runDoctor,
     onSuccess: (data) => qc.setQueryData(keys.doctor, data),
+  })
+}
+
+export function useFixIssue() {
+  const qc = useQueryClient()
+  return useMutation<void, Error, DoctorIssue>({
+    mutationFn: api.fixIssue,
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.doctor }),
   })
 }

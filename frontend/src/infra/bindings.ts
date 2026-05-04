@@ -6,6 +6,7 @@
 
 import type {
   Skill,
+  AggregatedSkill,
   Project,
   ProjectCandidate,
   Activation,
@@ -15,6 +16,9 @@ import type {
   ResolveConflictRequest,
   RegisterProjectRequest,
   DoctorReport,
+  DoctorIssue,
+  CopySkillRequest,
+  DeleteSkillRequest,
 } from '@/types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,7 +31,12 @@ function call<T>(method: string, ...args: unknown[]): Promise<T> {
 
 export const api = {
   // Skills
+  readSkillContent: (path: string) => call<string>('ReadSkillContent', path),
   listSkills: () => call<Skill[]>('ListSkills'),
+  listAllSkills: () => call<AggregatedSkill[]>('ListAllSkills'),
+  listProjectSkills: (projectId: string) => call<Skill[]>('ListProjectSkills', projectId),
+  copySkill: (req: CopySkillRequest) => call<void>('CopySkill', req),
+  deleteSkill: (req: DeleteSkillRequest) => call<void>('DeleteSkill', req),
 
   // Projects
   listProjects: () => call<Project[]>('ListProjects'),
@@ -49,4 +58,5 @@ export const api = {
 
   // Doctor
   runDoctor: () => call<DoctorReport>('RunDoctor'),
+  fixIssue: (issue: DoctorIssue) => call<void>('FixIssue', issue),
 }

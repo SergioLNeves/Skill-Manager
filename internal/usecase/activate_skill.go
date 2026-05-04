@@ -27,23 +27,26 @@ type ActivateSkillRequest struct {
 // When a conflict is detected it returns an ActivateResult with Conflict set
 // and no error — the caller must resolve it via ResolveConflict.
 type ActivateSkill struct {
-	skills      SkillRepository
-	projects    ProjectRepository
-	activations ActivationRepository
-	adapters    map[domain.Agent]AgentAdapter
+	skills        SkillRepository
+	projectSkills ProjectSkillRepository
+	projects      ProjectRepository
+	activations   ActivationRepository
+	adapters      map[domain.Agent]AgentAdapter
 }
 
 func NewActivateSkill(
 	skills SkillRepository,
+	projectSkills ProjectSkillRepository,
 	projects ProjectRepository,
 	activations ActivationRepository,
 	adapters map[domain.Agent]AgentAdapter,
 ) *ActivateSkill {
 	return &ActivateSkill{
-		skills:      skills,
-		projects:    projects,
-		activations: activations,
-		adapters:    adapters,
+		skills:        skills,
+		projectSkills: projectSkills,
+		projects:      projects,
+		activations:   activations,
+		adapters:      adapters,
 	}
 }
 
@@ -52,7 +55,7 @@ func (uc *ActivateSkill) Execute(ctx context.Context, req ActivateSkillRequest) 
 		return ActivateResult{}, err
 	}
 
-	if _, err := uc.skills.GetByID(ctx, req.SkillID); err != nil {
+	if _, err := uc.resolveSkill(ctx, req.SkillID, req.ProjectID); err != nil {
 		if errors.Is(err, domain.ErrSkillNotFound) {
 			return ActivateResult{}, domain.ErrSkillNotFound
 		}
@@ -60,17 +63,12 @@ func (uc *ActivateSkill) Execute(ctx context.Context, req ActivateSkillRequest) 
 	}
 
 	if req.Scope == domain.ScopeProject {
-		project, err := uc.projects.GetByID(ctx, req.ProjectID)
-		if err != nil {
+		if _, err := uc.projects.GetByID(ctx, req.ProjectID); err != nil {
 			if errors.Is(err, domain.ErrProjectNotFound) {
 				return ActivateResult{}, domain.ErrProjectNotFound
 			}
 			return ActivateResult{}, fmt.Errorf("activate skill: fetch project: %w", err)
 		}
-		if !project.SupportsAgent(req.Agent) {
-			return ActivateResult{}, domain.ErrAgentNotInProject
-		}
-
 		conflict, err := uc.activations.FindConflict(ctx, req.SkillID, req.Agent, req.ProjectID)
 		if err != nil {
 			return ActivateResult{}, fmt.Errorf("activate skill: check conflict: %w", err)
@@ -134,7 +132,7 @@ func (uc *ActivateSkill) applyAdapter(ctx context.Context, req ActivateSkillRequ
 		skillIDs[i] = a.SkillID
 	}
 
-	activeSkills, err := uc.resolveSkills(ctx, skillIDs)
+	activeSkills, err := uc.resolveSkills(ctx, skillIDs, req.ProjectID)
 	if err != nil {
 		return err
 	}
@@ -150,10 +148,29 @@ func (uc *ActivateSkill) applyAdapter(ctx context.Context, req ActivateSkillRequ
 	return adapter.ApplyProject(ctx, project, activeSkills)
 }
 
-func (uc *ActivateSkill) resolveSkills(ctx context.Context, ids []string) ([]domain.Skill, error) {
+// resolveSkill looks up a skill by ID, checking both global and project repositories.
+func (uc *ActivateSkill) resolveSkill(ctx context.Context, skillID, projectID string) (domain.Skill, error) {
+	s, err := uc.skills.GetByID(ctx, skillID)
+	if err == nil {
+		return s, nil
+	}
+	if !errors.Is(err, domain.ErrSkillNotFound) {
+		return domain.Skill{}, err
+	}
+	if projectID == "" {
+		return domain.Skill{}, domain.ErrSkillNotFound
+	}
+	project, err := uc.projects.GetByID(ctx, projectID)
+	if err != nil {
+		return domain.Skill{}, domain.ErrSkillNotFound
+	}
+	return uc.projectSkills.GetByID(ctx, skillID, project)
+}
+
+func (uc *ActivateSkill) resolveSkills(ctx context.Context, ids []string, projectID string) ([]domain.Skill, error) {
 	skills := make([]domain.Skill, 0, len(ids))
 	for _, id := range ids {
-		s, err := uc.skills.GetByID(ctx, id)
+		s, err := uc.resolveSkill(ctx, id, projectID)
 		if err != nil {
 			if errors.Is(err, domain.ErrSkillNotFound) {
 				continue

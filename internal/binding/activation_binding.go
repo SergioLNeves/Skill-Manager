@@ -110,11 +110,12 @@ func (b *ActivationBinding) ResolveConflict(ctx context.Context, req ResolveConf
 
 // DoctorBinding exposes the doctor health check to the Wails frontend.
 type DoctorBinding struct {
-	doctor *usecase.Doctor
+	doctor   *usecase.Doctor
+	fixIssue *usecase.FixIssue
 }
 
-func NewDoctorBinding(doctor *usecase.Doctor) *DoctorBinding {
-	return &DoctorBinding{doctor: doctor}
+func NewDoctorBinding(doctor *usecase.Doctor, fixIssue *usecase.FixIssue) *DoctorBinding {
+	return &DoctorBinding{doctor: doctor, fixIssue: fixIssue}
 }
 
 // Run executes the health check and returns any detected issues.
@@ -124,6 +125,11 @@ func (b *DoctorBinding) Run(ctx context.Context) (DoctorReportDTO, error) {
 		return DoctorReportDTO{}, fmt.Errorf("doctor binding: %w", err)
 	}
 	return toDoctorReportDTO(report), nil
+}
+
+// Fix applies the automated fix for a single issue.
+func (b *DoctorBinding) Fix(ctx context.Context, issue DoctorIssueDTO) error {
+	return b.fixIssue.Execute(ctx, fromDoctorIssueDTO(issue))
 }
 
 // fromActivationDTO converts a DTO back to a domain.Activation for conflict resolution.

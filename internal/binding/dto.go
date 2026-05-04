@@ -9,11 +9,46 @@ import (
 
 // SkillDTO is the frontend representation of a skill.
 type SkillDTO struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Path        string `json:"path"`
-	UpdatedAt   string `json:"updatedAt"`
+	ID               string `json:"id"`
+	Name             string `json:"name"`
+	Description      string `json:"description"`
+	Path             string `json:"path"`
+	Source           string `json:"source"`           // "global" or "project"
+	OwnerProjectID   string `json:"ownerProjectId"`   // non-empty when Source == "project"
+	OwnerProjectName string `json:"ownerProjectName"` // display name of owning project
+	UpdatedAt        string `json:"updatedAt"`
+}
+
+// AggregatedSkillDTO is the frontend representation of a deduplicated skill with all locations.
+type AggregatedSkillDTO struct {
+	Name        string              `json:"name"`
+	Description string              `json:"description"`
+	IsGlobal    bool                `json:"isGlobal"`
+	GlobalPath  string              `json:"globalPath"`
+	Projects    []SkillProjectRef   `json:"projects"`
+	UpdatedAt   string              `json:"updatedAt"`
+}
+
+// SkillProjectRef is a lightweight project reference inside an aggregated skill.
+type SkillProjectRef struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Path      string `json:"path"`      // project root path
+	SkillPath string `json:"skillPath"` // skill directory path (for reading SKILL.md)
+}
+
+// CopySkillRequestDTO carries a skill copy request from the frontend.
+type CopySkillRequestDTO struct {
+	SkillID         string `json:"skillId"`
+	SourceProjectID string `json:"sourceProjectId"`
+	TargetProjectID string `json:"targetProjectId"`
+	Agent           string `json:"agent"` // "claude" or "copilot"
+}
+
+// DeleteSkillRequestDTO carries a skill deletion request from the frontend.
+type DeleteSkillRequestDTO struct {
+	SkillID   string `json:"skillId"`
+	ProjectID string `json:"projectId"`
 }
 
 // ProjectDTO is the frontend representation of a registered project.
@@ -81,9 +116,12 @@ type ResolveConflictRequestDTO struct {
 
 // DoctorIssueDTO describes a single consistency problem.
 type DoctorIssueDTO struct {
-	Kind    string `json:"kind"`
-	Detail  string `json:"detail"`
-	Fixable bool   `json:"fixable"`
+	Kind     string            `json:"kind"`
+	Title    string            `json:"title"`
+	Detail   string            `json:"detail"`
+	HowToFix string            `json:"howToFix"`
+	Fixable  bool              `json:"fixable"`
+	FixData  map[string]string `json:"fixData"`
 }
 
 // DoctorReportDTO is the result of a health check run.
@@ -101,10 +139,27 @@ type RegisterProjectRequestDTO struct {
 
 func toSkillDTO(s domain.Skill) SkillDTO {
 	return SkillDTO{
-		ID:          s.ID,
+		ID:             s.ID,
+		Name:           s.Name,
+		Description:    s.Description,
+		Path:           s.Path,
+		Source:         string(s.Source),
+		OwnerProjectID: s.OwnerProjectID,
+		UpdatedAt:      s.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
+func toAggregatedSkillDTO(s usecase.AggregatedSkill) AggregatedSkillDTO {
+	refs := make([]SkillProjectRef, len(s.Projects))
+	for i, p := range s.Projects {
+		refs[i] = SkillProjectRef{ID: p.ID, Name: p.Name, Path: p.Path, SkillPath: p.SkillPath}
+	}
+	return AggregatedSkillDTO{
 		Name:        s.Name,
 		Description: s.Description,
-		Path:        s.Path,
+		IsGlobal:    s.IsGlobal,
+		GlobalPath:  s.GlobalPath,
+		Projects:    refs,
 		UpdatedAt:   s.UpdatedAt.UTC().Format(time.RFC3339),
 	}
 }
@@ -165,7 +220,25 @@ func toConflictDTO(c domain.Conflict) ConflictDTO {
 func toDoctorReportDTO(r usecase.DoctorReport) DoctorReportDTO {
 	issues := make([]DoctorIssueDTO, len(r.Issues))
 	for i, iss := range r.Issues {
-		issues[i] = DoctorIssueDTO{Kind: iss.Kind, Detail: iss.Detail, Fixable: iss.Fixable}
+		issues[i] = DoctorIssueDTO{
+			Kind:     iss.Kind,
+			Title:    iss.Title,
+			Detail:   iss.Detail,
+			HowToFix: iss.HowToFix,
+			Fixable:  iss.Fixable,
+			FixData:  iss.FixData,
+		}
 	}
 	return DoctorReportDTO{Issues: issues}
+}
+
+func fromDoctorIssueDTO(dto DoctorIssueDTO) usecase.DoctorIssue {
+	return usecase.DoctorIssue{
+		Kind:     dto.Kind,
+		Title:    dto.Title,
+		Detail:   dto.Detail,
+		HowToFix: dto.HowToFix,
+		Fixable:  dto.Fixable,
+		FixData:  dto.FixData,
+	}
 }

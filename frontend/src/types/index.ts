@@ -3,7 +3,38 @@ export interface Skill {
   name: string
   description: string
   path: string
+  source: 'global' | 'project'
+  ownerProjectId: string
+  ownerProjectName: string
   updatedAt: string
+}
+
+export interface SkillProjectRef {
+  id: string
+  name: string
+  path: string      // project root path
+  skillPath: string // skill directory path (for reading SKILL.md)
+}
+
+export interface AggregatedSkill {
+  name: string
+  description: string
+  isGlobal: boolean
+  globalPath: string
+  projects: SkillProjectRef[]
+  updatedAt: string
+}
+
+export interface CopySkillRequest {
+  skillId: string
+  sourceProjectId: string
+  targetProjectId: string
+  agent: 'claude' | 'copilot'
+}
+
+export interface DeleteSkillRequest {
+  skillId: string
+  projectId: string
 }
 
 export interface Project {
@@ -76,8 +107,11 @@ export interface RegisterProjectRequest {
 
 export interface DoctorIssue {
   kind: string
+  title: string
   detail: string
+  howToFix: string
   fixable: boolean
+  fixData: Record<string, string>
 }
 
 export interface DoctorReport {
@@ -86,7 +120,10 @@ export interface DoctorReport {
 
 export interface Settings {
   workspaceRoots: string[]
-  skillsHome: string
+  globalSkillSources: string[]
+  // Legacy fields (back-compat)
+  skillsHome?: string
+  skillSources?: string[]
 }
 
 export const AGENT_CLAUDE = 'claude'
