@@ -123,6 +123,11 @@ func (m *SymlinkManager) IsManagedLink(_ context.Context, target string) (bool, 
 		return false, fmt.Errorf("symlink manager: abs path %s: %w", dest, err)
 	}
 
+	// Resolve managedRoot the same way so symlinked OS dirs (e.g. /var →
+	// /private/var on macOS) don't cause a false "outside managed root".
 	root := filepath.Clean(m.managedRoot)
+	if resolved, err := filepath.EvalSymlinks(root); err == nil {
+		root = resolved
+	}
 	return strings.HasPrefix(abs, root+string(filepath.Separator)) || abs == root, nil
 }
