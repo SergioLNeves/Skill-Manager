@@ -122,6 +122,12 @@ func (m *SymlinkManager) IsManagedLink(_ context.Context, target string) (bool, 
 	if err != nil {
 		return false, fmt.Errorf("symlink manager: abs path %s: %w", dest, err)
 	}
+	// For broken symlinks the target doesn't exist, so EvalSymlinks fails on
+	// the full path. Resolve the parent directory instead so that OS-level
+	// symlinks (e.g. /tmp → /private/tmp on macOS) are canonicalized.
+	if resolved, err := filepath.EvalSymlinks(filepath.Dir(abs)); err == nil {
+		abs = filepath.Join(resolved, filepath.Base(abs))
+	}
 
 	// Resolve managedRoot the same way so symlinked OS dirs (e.g. /var →
 	// /private/var on macOS) don't cause a false "outside managed root".
