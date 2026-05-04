@@ -1069,3 +1069,36 @@ func (_c *MockProjectScanner_Scan_Call) RunAndReturn(run func(ctx context.Contex
 	_c.Call.Return(run)
 	return _c
 }
+
+// MockProjectSkillRepository is a hand-written stub satisfying ProjectSkillRepository.
+type MockProjectSkillRepository struct {
+	mock.Mock
+}
+
+func NewMockProjectSkillRepository(t interface {
+	mock.TestingT
+	Cleanup(func())
+}) *MockProjectSkillRepository {
+	m := &MockProjectSkillRepository{}
+	m.Mock.Test(t)
+	t.Cleanup(func() { m.AssertExpectations(t) })
+	return m
+}
+
+func (m *MockProjectSkillRepository) ListByProject(ctx context.Context, project domain.Project) ([]domain.Skill, error) {
+	ret := m.Called(ctx, project)
+	var r0 []domain.Skill
+	if v, ok := ret.Get(0).([]domain.Skill); ok {
+		r0 = v
+	}
+	return r0, ret.Error(1)
+}
+
+func (m *MockProjectSkillRepository) GetByID(ctx context.Context, id string, project domain.Project) (domain.Skill, error) {
+	ret := m.Called(ctx, id, project)
+	var r0 domain.Skill
+	if v, ok := ret.Get(0).(domain.Skill); ok {
+		r0 = v
+	}
+	return r0, ret.Error(1)
+}

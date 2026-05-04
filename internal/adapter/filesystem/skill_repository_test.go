@@ -79,14 +79,15 @@ description: Go code review checklist
 		assert.Len(t, skills, 1)
 	})
 
-	t.Run("returns error when root does not exist", func(t *testing.T) {
+	t.Run("returns empty list when root does not exist", func(t *testing.T) {
 		t.Parallel()
 
 		fs := afero.NewMemMapFs()
 		repo := NewSkillRepository(fs, "/nonexistent")
 
-		_, err := repo.List(context.Background())
-		require.Error(t, err)
+		skills, err := repo.List(context.Background())
+		require.NoError(t, err)
+		assert.Empty(t, skills)
 	})
 
 	t.Run("uses name as description when description field is absent", func(t *testing.T) {
@@ -105,14 +106,14 @@ name: my-skill
 		assert.Equal(t, "my-skill", skills[0].Description)
 	})
 
-	t.Run("ID is stable across calls for the same skill name", func(t *testing.T) {
+	t.Run("ID is stable across calls for the same skill path", func(t *testing.T) {
 		t.Parallel()
 
-		id1 := stableID("go-review")
-		id2 := stableID("go-review")
+		id1 := stableID("/skills/go-review")
+		id2 := stableID("/skills/go-review")
 		assert.Equal(t, id1, id2)
 
-		idOther := stableID("pt-review")
+		idOther := stableID("/skills/pt-review")
 		assert.NotEqual(t, id1, idOther)
 	})
 }
@@ -128,7 +129,7 @@ func TestSkillRepository_GetByID(t *testing.T) {
 description: Go code review
 ---`)
 		repo := NewSkillRepository(fs, "/skills")
-		id := stableID("go-review")
+		id := stableID("/skills/go-review")
 
 		skill, err := repo.GetByID(context.Background(), id)
 

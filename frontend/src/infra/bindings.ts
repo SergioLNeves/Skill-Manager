@@ -15,6 +15,8 @@ import type {
   ResolveConflictRequest,
   RegisterProjectRequest,
   DoctorReport,
+  CopySkillRequest,
+  DeleteSkillRequest,
 } from '@/types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -28,6 +30,10 @@ function call<T>(method: string, ...args: unknown[]): Promise<T> {
 export const api = {
   // Skills
   listSkills: () => call<Skill[]>('ListSkills'),
+  listAllSkills: () => call<Skill[]>('ListAllSkills'),
+  listProjectSkills: (projectId: string) => call<Skill[]>('ListProjectSkills', projectId),
+  copySkill: (req: CopySkillRequest) => call<void>('CopySkill', req),
+  deleteSkill: (req: DeleteSkillRequest) => call<void>('DeleteSkill', req),
 
   // Projects
   listProjects: () => call<Project[]>('ListProjects'),

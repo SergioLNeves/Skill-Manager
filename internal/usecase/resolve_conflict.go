@@ -16,23 +16,26 @@ type ResolveConflictRequest struct {
 
 // ResolveConflict applies the user's chosen resolution to an activation conflict.
 type ResolveConflict struct {
-	projects    ProjectRepository
-	skills      SkillRepository
-	activations ActivationRepository
-	adapters    map[domain.Agent]AgentAdapter
+	projects      ProjectRepository
+	skills        SkillRepository
+	projectSkills ProjectSkillRepository
+	activations   ActivationRepository
+	adapters      map[domain.Agent]AgentAdapter
 }
 
 func NewResolveConflict(
 	projects ProjectRepository,
 	skills SkillRepository,
+	projectSkills ProjectSkillRepository,
 	activations ActivationRepository,
 	adapters map[domain.Agent]AgentAdapter,
 ) *ResolveConflict {
 	return &ResolveConflict{
-		projects:    projects,
-		skills:      skills,
-		activations: activations,
-		adapters:    adapters,
+		projects:      projects,
+		skills:        skills,
+		projectSkills: projectSkills,
+		activations:   activations,
+		adapters:      adapters,
 	}
 }
 
@@ -94,7 +97,11 @@ func (uc *ResolveConflict) saveProjectOverride(ctx context.Context, c domain.Con
 	for _, a := range all {
 		s, err := uc.skills.GetByID(ctx, a.SkillID)
 		if err != nil {
-			continue
+			// Try project skills as fallback.
+			s, err = uc.projectSkills.GetByID(ctx, a.SkillID, project)
+			if err != nil {
+				continue
+			}
 		}
 		activeSkills = append(activeSkills, s)
 	}

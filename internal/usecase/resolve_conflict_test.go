@@ -39,6 +39,7 @@ func TestResolveConflict_Execute(t *testing.T) {
 		uc := NewResolveConflict(
 			NewMockProjectRepository(t),
 			NewMockSkillRepository(t),
+			NewMockProjectSkillRepository(t),
 			NewMockActivationRepository(t),
 			map[domain.Agent]AgentAdapter{},
 		)
@@ -78,6 +79,7 @@ func TestResolveConflict_Execute(t *testing.T) {
 		uc := NewResolveConflict(
 			projectRepo,
 			skillRepo,
+			NewMockProjectSkillRepository(t),
 			activationRepo,
 			map[domain.Agent]AgentAdapter{domain.AgentClaude: adapter},
 		)
@@ -95,6 +97,7 @@ func TestResolveConflict_Execute(t *testing.T) {
 		uc := NewResolveConflict(
 			NewMockProjectRepository(t),
 			NewMockSkillRepository(t),
+			NewMockProjectSkillRepository(t),
 			NewMockActivationRepository(t),
 			map[domain.Agent]AgentAdapter{},
 		)

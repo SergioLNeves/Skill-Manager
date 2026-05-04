@@ -53,7 +53,7 @@ func TestActivateSkill_Execute(t *testing.T) {
 		adapter.EXPECT().Agent().Return(domain.AgentClaude).Maybe()
 		adapter.EXPECT().ApplyGlobal(context.Background(), []domain.Skill{skill}).Return(nil)
 
-		uc := NewActivateSkill(skillRepo, NewMockProjectRepository(t), activationRepo,
+		uc := NewActivateSkill(skillRepo, NewMockProjectSkillRepository(t), NewMockProjectRepository(t), activationRepo,
 			map[domain.Agent]AgentAdapter{domain.AgentClaude: adapter})
 
 		result, err := uc.Execute(context.Background(), ActivateSkillRequest{
@@ -90,7 +90,7 @@ func TestActivateSkill_Execute(t *testing.T) {
 			FindConflict(context.Background(), skill.ID, domain.AgentClaude, projectID).
 			Return(conflict, nil)
 
-		uc := NewActivateSkill(skillRepo, projectRepo, activationRepo,
+		uc := NewActivateSkill(skillRepo, NewMockProjectSkillRepository(t), projectRepo, activationRepo,
 			map[domain.Agent]AgentAdapter{})
 
 		result, err := uc.Execute(context.Background(), ActivateSkillRequest{
@@ -111,7 +111,7 @@ func TestActivateSkill_Execute(t *testing.T) {
 		skillRepo := NewMockSkillRepository(t)
 		skillRepo.EXPECT().GetByID(context.Background(), "missing").Return(domain.Skill{}, domain.ErrSkillNotFound)
 
-		uc := NewActivateSkill(skillRepo, NewMockProjectRepository(t), NewMockActivationRepository(t),
+		uc := NewActivateSkill(skillRepo, NewMockProjectSkillRepository(t), NewMockProjectRepository(t), NewMockActivationRepository(t),
 			map[domain.Agent]AgentAdapter{})
 
 		_, err := uc.Execute(context.Background(), ActivateSkillRequest{
@@ -126,7 +126,7 @@ func TestActivateSkill_Execute(t *testing.T) {
 	t.Run("returns ErrInvalidScope when project id missing for project scope", func(t *testing.T) {
 		t.Parallel()
 
-		uc := NewActivateSkill(NewMockSkillRepository(t), NewMockProjectRepository(t),
+		uc := NewActivateSkill(NewMockSkillRepository(t), NewMockProjectSkillRepository(t), NewMockProjectRepository(t),
 			NewMockActivationRepository(t), map[domain.Agent]AgentAdapter{})
 
 		_, err := uc.Execute(context.Background(), ActivateSkillRequest{
@@ -141,7 +141,7 @@ func TestActivateSkill_Execute(t *testing.T) {
 	t.Run("returns ErrInvalidScope when project id set on global scope", func(t *testing.T) {
 		t.Parallel()
 
-		uc := NewActivateSkill(NewMockSkillRepository(t), NewMockProjectRepository(t),
+		uc := NewActivateSkill(NewMockSkillRepository(t), NewMockProjectSkillRepository(t), NewMockProjectRepository(t),
 			NewMockActivationRepository(t), map[domain.Agent]AgentAdapter{})
 
 		_, err := uc.Execute(context.Background(), ActivateSkillRequest{
@@ -157,7 +157,7 @@ func TestActivateSkill_Execute(t *testing.T) {
 	t.Run("returns ErrInvalidScope when skill id is empty", func(t *testing.T) {
 		t.Parallel()
 
-		uc := NewActivateSkill(NewMockSkillRepository(t), NewMockProjectRepository(t),
+		uc := NewActivateSkill(NewMockSkillRepository(t), NewMockProjectSkillRepository(t), NewMockProjectRepository(t),
 			NewMockActivationRepository(t), map[domain.Agent]AgentAdapter{})
 
 		_, err := uc.Execute(context.Background(), ActivateSkillRequest{
@@ -177,7 +177,7 @@ func TestActivateSkill_Execute(t *testing.T) {
 		projectRepo := NewMockProjectRepository(t)
 		projectRepo.EXPECT().GetByID(context.Background(), "missing-proj").Return(domain.Project{}, domain.ErrProjectNotFound)
 
-		uc := NewActivateSkill(skillRepo, projectRepo, NewMockActivationRepository(t),
+		uc := NewActivateSkill(skillRepo, NewMockProjectSkillRepository(t), projectRepo, NewMockActivationRepository(t),
 			map[domain.Agent]AgentAdapter{})
 
 		_, err := uc.Execute(context.Background(), ActivateSkillRequest{
@@ -188,34 +188,6 @@ func TestActivateSkill_Execute(t *testing.T) {
 		})
 
 		require.ErrorIs(t, err, domain.ErrProjectNotFound)
-	})
-
-	t.Run("returns ErrAgentNotInProject when agent not detected", func(t *testing.T) {
-		t.Parallel()
-
-		noAgentProject := domain.Project{
-			ID:             "proj-2",
-			DetectedAgents: []domain.Agent{domain.AgentCopilot},
-		}
-		pid := noAgentProject.ID
-
-		skillRepo := NewMockSkillRepository(t)
-		skillRepo.EXPECT().GetByID(context.Background(), skill.ID).Return(skill, nil)
-
-		projectRepo := NewMockProjectRepository(t)
-		projectRepo.EXPECT().GetByID(context.Background(), pid).Return(noAgentProject, nil)
-
-		uc := NewActivateSkill(skillRepo, projectRepo, NewMockActivationRepository(t),
-			map[domain.Agent]AgentAdapter{})
-
-		_, err := uc.Execute(context.Background(), ActivateSkillRequest{
-			SkillID:   skill.ID,
-			Agent:     domain.AgentClaude,
-			Scope:     domain.ScopeProject,
-			ProjectID: pid,
-		})
-
-		require.ErrorIs(t, err, domain.ErrAgentNotInProject)
 	})
 
 	t.Run("skips missing skill in resolveSkills during applyAdapter", func(t *testing.T) {
@@ -246,7 +218,7 @@ func TestActivateSkill_Execute(t *testing.T) {
 		adapter := NewMockAgentAdapter(t)
 		adapter.EXPECT().ApplyGlobal(context.Background(), []domain.Skill{skill}).Return(nil)
 
-		uc := NewActivateSkill(skillRepo, NewMockProjectRepository(t), activationRepo,
+		uc := NewActivateSkill(skillRepo, NewMockProjectSkillRepository(t), NewMockProjectRepository(t), activationRepo,
 			map[domain.Agent]AgentAdapter{domain.AgentClaude: adapter})
 
 		result, err := uc.Execute(context.Background(), ActivateSkillRequest{
@@ -291,7 +263,7 @@ func TestActivateSkill_Execute(t *testing.T) {
 		adapter := NewMockAgentAdapter(t)
 		adapter.EXPECT().ApplyProject(context.Background(), project, []domain.Skill{skill}).Return(nil)
 
-		uc := NewActivateSkill(skillRepo, projectRepo, activationRepo,
+		uc := NewActivateSkill(skillRepo, NewMockProjectSkillRepository(t), projectRepo, activationRepo,
 			map[domain.Agent]AgentAdapter{domain.AgentClaude: adapter})
 
 		result, err := uc.Execute(context.Background(), ActivateSkillRequest{

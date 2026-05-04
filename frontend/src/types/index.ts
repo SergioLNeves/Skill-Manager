@@ -3,7 +3,21 @@ export interface Skill {
   name: string
   description: string
   path: string
+  source: 'global' | 'project'
+  ownerProjectId: string
+  ownerProjectName: string
   updatedAt: string
+}
+
+export interface CopySkillRequest {
+  skillId: string
+  sourceProjectId: string
+  targetProjectId: string
+}
+
+export interface DeleteSkillRequest {
+  skillId: string
+  projectId: string
 }
 
 export interface Project {
@@ -86,7 +100,10 @@ export interface DoctorReport {
 
 export interface Settings {
   workspaceRoots: string[]
-  skillsHome: string
+  globalSkillSources: string[]
+  // Legacy fields (back-compat)
+  skillsHome?: string
+  skillSources?: string[]
 }
 
 export const AGENT_CLAUDE = 'claude'

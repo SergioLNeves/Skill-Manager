@@ -26,16 +26,17 @@ type Container struct {
 }
 
 // Wire builds the full dependency graph and returns a ready Container.
-// skillsHome is the path to the central skills repository (e.g. ~/.skills-manager/skills).
-// dbPath is the path to the SQLite registry (e.g. ~/.skills-manager/registry.db).
-func Wire(skillsHome, dbPath string) (*Container, error) {
+// globalSkillSources is the list of directories to scan for global skills.
+// dbPath is the path to the SQLite registry.
+func Wire(globalSkillSources []string, dbPath string) (*Container, error) {
 	db, err := persistence.Open(dbPath)
 	if err != nil {
 		return nil, err
 	}
 
 	// Repositories
-	skillRepo := filesystem.NewSkillRepository(afero.NewOsFs(), skillsHome)
+	skillRepo := filesystem.NewSkillRepository(afero.NewOsFs(), globalSkillSources...)
+	projectSkillRepo := filesystem.NewProjectSkillRepository(afero.NewOsFs())
 	projectRepo := persistence.NewProjectRepository(db)
 	activationRepo := persistence.NewActivationRepository(db)
 	projectScanner := filesystem.NewProjectScanner(afero.NewOsFs())
@@ -53,30 +54,33 @@ func Wire(skillsHome, dbPath string) (*Container, error) {
 
 	// Use cases
 	listSkills := usecase.NewListSkills(skillRepo)
+	listProjectSkills := usecase.NewListProjectSkills(projectRepo, projectSkillRepo)
+	listAllSkills := usecase.NewListAllSkills(skillRepo, projectRepo, projectSkillRepo)
+	copySkill := usecase.NewCopySkill(skillRepo, projectRepo, projectSkillRepo)
+	deleteSkill := usecase.NewDeleteSkill(skillRepo, projectRepo, projectSkillRepo, activationRepo)
 	listProjects := usecase.NewListProjects(projectRepo)
 	registerProject := usecase.NewRegisterProject(projectRepo)
 	scanProjects := usecase.NewScanProjects(projectScanner)
 	deleteProject := usecase.NewDeleteProject(projectRepo)
-	activateSkill := usecase.NewActivateSkill(skillRepo, projectRepo, activationRepo, adapters)
-	deactivateSkill := usecase.NewDeactivateSkill(skillRepo, projectRepo, activationRepo, adapters)
-	resolveConflict := usecase.NewResolveConflict(projectRepo, skillRepo, activationRepo, adapters)
+	activateSkill := usecase.NewActivateSkill(skillRepo, projectSkillRepo, projectRepo, activationRepo, adapters)
+	deactivateSkill := usecase.NewDeactivateSkill(skillRepo, projectSkillRepo, projectRepo, activationRepo, adapters)
+	resolveConflict := usecase.NewResolveConflict(projectRepo, skillRepo, projectSkillRepo, activationRepo, adapters)
 	doctor := usecase.NewDoctor(skillRepo, projectRepo, activationRepo, homeDir)
 
 	return &Container{
 		DB:          db,
-		Skills:      binding.NewSkillsBinding(listSkills),
+		Skills:      binding.NewSkillsBinding(listSkills, listProjectSkills, listAllSkills, copySkill, deleteSkill),
 		Projects:    binding.NewProjectsBinding(listProjects, registerProject, scanProjects, deleteProject),
 		Activations: binding.NewActivationBinding(activateSkill, deactivateSkill, resolveConflict, activationRepo),
 		Doctor:      binding.NewDoctorBinding(doctor),
 	}, nil
 }
 
-// DefaultPaths returns the default skillsHome and dbPath under the user home.
-func DefaultPaths() (skillsHome, dbPath string, err error) {
+// DefaultDBPath returns the default database path under the user home.
+func DefaultDBPath() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
-	base := filepath.Join(home, ".skills-manager")
-	return filepath.Join(base, "skills"), filepath.Join(base, "registry.db"), nil
+	return filepath.Join(home, ".skills-manager", "registry.db"), nil
 }

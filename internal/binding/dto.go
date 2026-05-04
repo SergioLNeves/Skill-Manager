@@ -9,11 +9,27 @@ import (
 
 // SkillDTO is the frontend representation of a skill.
 type SkillDTO struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Path        string `json:"path"`
-	UpdatedAt   string `json:"updatedAt"`
+	ID               string `json:"id"`
+	Name             string `json:"name"`
+	Description      string `json:"description"`
+	Path             string `json:"path"`
+	Source           string `json:"source"`           // "global" or "project"
+	OwnerProjectID   string `json:"ownerProjectId"`   // non-empty when Source == "project"
+	OwnerProjectName string `json:"ownerProjectName"` // display name of owning project
+	UpdatedAt        string `json:"updatedAt"`
+}
+
+// CopySkillRequestDTO carries a skill copy request from the frontend.
+type CopySkillRequestDTO struct {
+	SkillID         string `json:"skillId"`
+	SourceProjectID string `json:"sourceProjectId"`
+	TargetProjectID string `json:"targetProjectId"`
+}
+
+// DeleteSkillRequestDTO carries a skill deletion request from the frontend.
+type DeleteSkillRequestDTO struct {
+	SkillID   string `json:"skillId"`
+	ProjectID string `json:"projectId"`
 }
 
 // ProjectDTO is the frontend representation of a registered project.
@@ -101,12 +117,20 @@ type RegisterProjectRequestDTO struct {
 
 func toSkillDTO(s domain.Skill) SkillDTO {
 	return SkillDTO{
-		ID:          s.ID,
-		Name:        s.Name,
-		Description: s.Description,
-		Path:        s.Path,
-		UpdatedAt:   s.UpdatedAt.UTC().Format(time.RFC3339),
+		ID:             s.ID,
+		Name:           s.Name,
+		Description:    s.Description,
+		Path:           s.Path,
+		Source:         string(s.Source),
+		OwnerProjectID: s.OwnerProjectID,
+		UpdatedAt:      s.UpdatedAt.UTC().Format(time.RFC3339),
 	}
+}
+
+func toSkillWithProjectDTO(s usecase.SkillWithProject) SkillDTO {
+	dto := toSkillDTO(s.Skill)
+	dto.OwnerProjectName = s.OwnerProjectName
+	return dto
 }
 
 func toProjectDTO(p domain.Project) ProjectDTO {

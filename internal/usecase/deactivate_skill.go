@@ -10,28 +10,30 @@ import (
 
 // DeactivateSkill removes an activation and re-applies the adapter state.
 type DeactivateSkill struct {
-	skills      SkillRepository
-	projects    ProjectRepository
-	activations ActivationRepository
-	adapters    map[domain.Agent]AgentAdapter
+	skills        SkillRepository
+	projectSkills ProjectSkillRepository
+	projects      ProjectRepository
+	activations   ActivationRepository
+	adapters      map[domain.Agent]AgentAdapter
 }
 
 func NewDeactivateSkill(
 	skills SkillRepository,
+	projectSkills ProjectSkillRepository,
 	projects ProjectRepository,
 	activations ActivationRepository,
 	adapters map[domain.Agent]AgentAdapter,
 ) *DeactivateSkill {
 	return &DeactivateSkill{
-		skills:      skills,
-		projects:    projects,
-		activations: activations,
-		adapters:    adapters,
+		skills:        skills,
+		projectSkills: projectSkills,
+		projects:      projects,
+		activations:   activations,
+		adapters:      adapters,
 	}
 }
 
 func (uc *DeactivateSkill) Execute(ctx context.Context, activationID int64) error {
-	// Fetch first so we know agent/scope/projectID for reapply before deleting.
 	all, err := uc.activations.List(ctx, ActivationFilter{})
 	if err != nil {
 		return fmt.Errorf("deactivate skill: list activations: %w", err)
@@ -75,9 +77,14 @@ func (uc *DeactivateSkill) reapply(ctx context.Context, removed *domain.Activati
 		skillIDs[i] = a.SkillID
 	}
 
+	projectID := ""
+	if removed.ProjectID != nil {
+		projectID = *removed.ProjectID
+	}
+
 	activeSkills := make([]domain.Skill, 0, len(skillIDs))
 	for _, id := range skillIDs {
-		s, err := uc.skills.GetByID(ctx, id)
+		s, err := uc.resolveSkill(ctx, id, projectID)
 		if err != nil {
 			if errors.Is(err, domain.ErrSkillNotFound) {
 				continue
@@ -91,9 +98,27 @@ func (uc *DeactivateSkill) reapply(ctx context.Context, removed *domain.Activati
 		return adapter.ApplyGlobal(ctx, activeSkills)
 	}
 
-	project, err := uc.projects.GetByID(ctx, *removed.ProjectID)
+	project, err := uc.projects.GetByID(ctx, projectID)
 	if err != nil {
 		return fmt.Errorf("fetch project for adapter: %w", err)
 	}
 	return adapter.ApplyProject(ctx, project, activeSkills)
+}
+
+func (uc *DeactivateSkill) resolveSkill(ctx context.Context, skillID, projectID string) (domain.Skill, error) {
+	s, err := uc.skills.GetByID(ctx, skillID)
+	if err == nil {
+		return s, nil
+	}
+	if !errors.Is(err, domain.ErrSkillNotFound) {
+		return domain.Skill{}, err
+	}
+	if projectID == "" {
+		return domain.Skill{}, domain.ErrSkillNotFound
+	}
+	project, err := uc.projects.GetByID(ctx, projectID)
+	if err != nil {
+		return domain.Skill{}, domain.ErrSkillNotFound
+	}
+	return uc.projectSkills.GetByID(ctx, skillID, project)
 }

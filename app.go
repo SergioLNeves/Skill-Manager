@@ -12,6 +12,8 @@ import (
 	"skill-manager/internal/di"
 	"skill-manager/internal/logger"
 	"skill-manager/internal/watcher"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // App is the Wails application struct.
@@ -55,38 +57,40 @@ func (a *App) startup(ctx context.Context) {
 		cfg = config.DefaultSettings(home)
 	}
 
-	skillsHome := cfg.SkillsHome
+	globalSources := cfg.EffectiveGlobalSources()
 	if env := os.Getenv("SKILLS_MANAGER_HOME"); env != "" {
-		skillsHome = env
-		slog.Info("overriding skills home from env", "path", skillsHome)
+		globalSources = []string{env}
+		slog.Info("overriding global skill sources from env", "path", env)
 	}
 
-	if err = os.MkdirAll(skillsHome, 0o755); err != nil {
-		slog.Error("cannot create skills home", "path", skillsHome, "err", err)
-		return
+	// Ensure all configured global source directories exist.
+	for _, src := range globalSources {
+		if err = os.MkdirAll(src, 0o755); err != nil {
+			slog.Warn("cannot create global skill source dir", "path", src, "err", err)
+		}
 	}
 
 	dbPath := filepath.Join(base, "registry.db")
-	container, err := di.Wire(skillsHome, dbPath)
+	container, err := di.Wire(globalSources, dbPath)
 	if err != nil {
 		slog.Error("wire container failed", "err", err)
 		return
 	}
 	a.container = container
 
-	// File watcher for skills directory.
-	sw, err := watcher.NewSkillsWatcher(skillsHome, func() {
-		slog.Info("skills directory changed")
-		// The frontend re-fetches via TanStack Query on the next focus/poll;
-		// future work: push a Wails event here.
-	})
-	if err != nil {
-		slog.Warn("skills watcher unavailable", "err", err)
-	} else {
-		go sw.Run(a.ctx)
+	// File watcher for the first global skill source directory.
+	if len(globalSources) > 0 {
+		sw, err := watcher.NewSkillsWatcher(globalSources[0], func() {
+			slog.Info("skills directory changed")
+		})
+		if err != nil {
+			slog.Warn("skills watcher unavailable", "err", err)
+		} else {
+			go sw.Run(a.ctx)
+		}
 	}
 
-	slog.Info("skills-manager ready", "skillsHome", skillsHome, "db", dbPath)
+	slog.Info("skills-manager ready", "globalSources", globalSources, "db", dbPath)
 }
 
 func (a *App) shutdown(_ context.Context) {
@@ -107,6 +111,18 @@ func (a *App) shutdown(_ context.Context) {
 func (a *App) GetSettings() (config.Settings, error) {
 	home, _ := os.UserHomeDir()
 	return config.Load(a.settingsPath, config.DefaultSettings(home))
+}
+
+// SelectDirectory opens the native OS directory picker and returns the chosen path.
+func (a *App) SelectDirectory() string {
+	path, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Selecionar pasta",
+	})
+	if err != nil {
+		slog.Warn("SelectDirectory failed", "err", err)
+		return ""
+	}
+	return path
 }
 
 // SaveSettings persists updated settings.
@@ -132,6 +148,34 @@ func (a *App) ListSkills() ([]binding.SkillDTO, error) {
 		return nil, err
 	}
 	return a.container.Skills.List(a.ctx)
+}
+
+func (a *App) ListProjectSkills(projectID string) ([]binding.SkillDTO, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
+	return a.container.Skills.ListByProject(a.ctx, projectID)
+}
+
+func (a *App) ListAllSkills() ([]binding.SkillDTO, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
+	return a.container.Skills.ListAll(a.ctx)
+}
+
+func (a *App) CopySkill(req binding.CopySkillRequestDTO) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
+	return a.container.Skills.CopySkill(a.ctx, req)
+}
+
+func (a *App) DeleteSkill(req binding.DeleteSkillRequestDTO) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
+	return a.container.Skills.DeleteSkill(a.ctx, req)
 }
 
 // --- Projects ---

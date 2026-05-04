@@ -42,7 +42,7 @@ func TestDeactivateSkill_Execute(t *testing.T) {
 		adapter := NewMockAgentAdapter(t)
 		adapter.EXPECT().ApplyGlobal(context.Background(), []domain.Skill{}).Return(nil)
 
-		uc := NewDeactivateSkill(skillRepo, NewMockProjectRepository(t), activationRepo,
+		uc := NewDeactivateSkill(skillRepo, NewMockProjectSkillRepository(t), NewMockProjectRepository(t), activationRepo,
 			map[domain.Agent]AgentAdapter{domain.AgentClaude: adapter})
 
 		err := uc.Execute(context.Background(), 42)
@@ -74,7 +74,7 @@ func TestDeactivateSkill_Execute(t *testing.T) {
 		adapter := NewMockAgentAdapter(t)
 		adapter.EXPECT().ApplyGlobal(context.Background(), []domain.Skill{skill}).Return(nil)
 
-		uc := NewDeactivateSkill(skillRepo, NewMockProjectRepository(t), activationRepo,
+		uc := NewDeactivateSkill(skillRepo, NewMockProjectSkillRepository(t), NewMockProjectRepository(t), activationRepo,
 			map[domain.Agent]AgentAdapter{domain.AgentClaude: adapter})
 
 		err := uc.Execute(context.Background(), 42)
@@ -91,7 +91,7 @@ func TestDeactivateSkill_Execute(t *testing.T) {
 			List(context.Background(), ActivationFilter{}).
 			Return([]domain.Activation{activation}, nil)
 
-		uc := NewDeactivateSkill(NewMockSkillRepository(t), NewMockProjectRepository(t), activationRepo,
+		uc := NewDeactivateSkill(NewMockSkillRepository(t), NewMockProjectSkillRepository(t), NewMockProjectRepository(t), activationRepo,
 			map[domain.Agent]AgentAdapter{})
 
 		err := uc.Execute(context.Background(), 999)
@@ -109,7 +109,7 @@ func TestDeactivateSkill_Execute(t *testing.T) {
 			Return([]domain.Activation{activation}, nil)
 		activationRepo.EXPECT().Delete(context.Background(), int64(42)).Return(dbErr)
 
-		uc := NewDeactivateSkill(NewMockSkillRepository(t), NewMockProjectRepository(t), activationRepo,
+		uc := NewDeactivateSkill(NewMockSkillRepository(t), NewMockProjectSkillRepository(t), NewMockProjectRepository(t), activationRepo,
 			map[domain.Agent]AgentAdapter{})
 
 		err := uc.Execute(context.Background(), 42)
@@ -144,7 +144,7 @@ func TestDeactivateSkill_Execute(t *testing.T) {
 		adapter := NewMockAgentAdapter(t)
 		adapter.EXPECT().ApplyProject(context.Background(), project, []domain.Skill{}).Return(nil)
 
-		uc := NewDeactivateSkill(NewMockSkillRepository(t), projectRepo, activationRepo,
+		uc := NewDeactivateSkill(NewMockSkillRepository(t), NewMockProjectSkillRepository(t), projectRepo, activationRepo,
 			map[domain.Agent]AgentAdapter{domain.AgentClaude: adapter})
 
 		err := uc.Execute(context.Background(), 55)

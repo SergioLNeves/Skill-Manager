@@ -2,11 +2,11 @@ import { createFileRoute, useParams } from '@tanstack/react-router'
 import { useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
-import { useProjects, useSkills, useActivations, useActivate, useDeactivate } from '@/infra/queries'
+import { useProjects, useSkills, useProjectSkills, useActivations, useActivate, useDeactivate } from '@/infra/queries'
 import { Badge } from '@/components/ui/badge'
 import { ConflictModal } from '@/components/conflict-modal'
 import { AgentToggle } from '@/components/agent-toggle'
-import type { Conflict, ActivateResult } from '@/types'
+import type { Conflict, ActivateResult, Skill } from '@/types'
 import { SCOPE_PROJECT, AGENT_CLAUDE, AGENT_COPILOT } from '@/types'
 
 export const Route = createFileRoute('/projects/$id')({
@@ -16,7 +16,8 @@ export const Route = createFileRoute('/projects/$id')({
 function ProjectDetailPage() {
   const { id } = useParams({ from: '/projects/$id' })
   const { data: projects = [] } = useProjects()
-  const { data: skills = [] } = useSkills()
+  const { data: globalSkills = [] } = useSkills()
+  const { data: projectSkills = [] } = useProjectSkills(id)
   const { data: activations = [] } = useActivations({ projectId: id })
   const activate = useActivate()
   const deactivate = useDeactivate()
@@ -42,8 +43,12 @@ function ProjectDetailPage() {
     }
   }
 
-  const supportsClaude = project.detectedAgents.includes(AGENT_CLAUDE)
-  const supportsCopilot = project.detectedAgents.includes(AGENT_COPILOT)
+  function isClaudeActive(skillId: string) {
+    return activations.some((a) => a.skillId === skillId && a.agent === AGENT_CLAUDE)
+  }
+  function isCopilotActive(skillId: string) {
+    return activations.some((a) => a.skillId === skillId && a.agent === AGENT_COPILOT)
+  }
 
   return (
     <div className="space-y-6">
@@ -60,49 +65,85 @@ function ProjectDetailPage() {
         </div>
       </div>
 
-      <div>
-        <h2 className="text-base font-medium mb-3">Skills</h2>
-        {!skills.length && (
-          <p className="text-sm text-muted-foreground">No skills available.</p>
-        )}
-        <div className="grid gap-3">
-          {skills.map((skill) => {
-            const claudeActive = activations.some(
-              (a) => a.skillId === skill.id && a.agent === AGENT_CLAUDE,
-            )
-            const copilotActive = activations.some(
-              (a) => a.skillId === skill.id && a.agent === AGENT_COPILOT,
-            )
-            return (
-              <div key={skill.id} className="rounded-lg border border-border px-4 py-3">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-medium">{skill.name}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{skill.description}</p>
-                  </div>
-                  <div className="flex gap-3 shrink-0">
-                    <AgentToggle
-                      label="Claude"
-                      active={claudeActive}
-                      disabled={!supportsClaude}
-                      onToggle={(v) => handleToggle(skill.id, AGENT_CLAUDE, v)}
-                    />
-                    <AgentToggle
-                      label="Copilot"
-                      active={copilotActive}
-                      disabled={!supportsCopilot}
-                      onToggle={(v) => handleToggle(skill.id, AGENT_COPILOT, v)}
-                    />
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+      <SkillSection
+        title="Skills deste Projeto"
+        description="Skills encontradas dentro da pasta do projeto (skills/ e .claude/skills/)."
+        skills={projectSkills}
+        emptyMessage="Nenhuma skill encontrada neste projeto. Crie uma subpasta com SKILL.md em skills/ ou .claude/skills/."
+        isClaudeActive={isClaudeActive}
+        isCopilotActive={isCopilotActive}
+        onToggle={handleToggle}
+      />
+
+      <SkillSection
+        title="Skills Globais"
+        description="Skills disponíveis globalmente. Ative individualmente para este projeto."
+        skills={globalSkills}
+        emptyMessage="Nenhuma skill global configurada. Adicione fontes em Settings."
+        isClaudeActive={isClaudeActive}
+        isCopilotActive={isCopilotActive}
+        onToggle={handleToggle}
+      />
 
       {conflict && (
         <ConflictModal conflict={conflict} onClose={() => setConflict(null)} />
+      )}
+    </div>
+  )
+}
+
+interface SkillSectionProps {
+  title: string
+  description: string
+  skills: Skill[]
+  emptyMessage: string
+  isClaudeActive: (skillId: string) => boolean
+  isCopilotActive: (skillId: string) => boolean
+  onToggle: (skillId: string, agent: string, active: boolean) => void
+}
+
+function SkillSection({
+  title,
+  description,
+  skills,
+  emptyMessage,
+  isClaudeActive,
+  isCopilotActive,
+  onToggle,
+}: SkillSectionProps) {
+  return (
+    <div>
+      <div className="mb-3">
+        <h2 className="text-base font-medium">{title}</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+      </div>
+      {!skills.length ? (
+        <p className="text-sm text-muted-foreground italic">{emptyMessage}</p>
+      ) : (
+        <div className="grid gap-3">
+          {skills.map((skill) => (
+            <div key={skill.id} className="rounded-lg border border-border px-4 py-3">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium">{skill.name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{skill.description}</p>
+                </div>
+                <div className="flex gap-3 shrink-0">
+                  <AgentToggle
+                    label="Claude"
+                    active={isClaudeActive(skill.id)}
+                    onToggle={(v) => onToggle(skill.id, AGENT_CLAUDE, v)}
+                  />
+                  <AgentToggle
+                    label="Copilot"
+                    active={isCopilotActive(skill.id)}
+                    onToggle={(v) => onToggle(skill.id, AGENT_COPILOT, v)}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   )

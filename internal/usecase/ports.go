@@ -6,10 +6,16 @@ import (
 	"skill-manager/internal/domain"
 )
 
-// SkillRepository reads skills from the central repository.
+// SkillRepository reads global skills from configured source directories.
 type SkillRepository interface {
 	List(ctx context.Context) ([]domain.Skill, error)
 	GetByID(ctx context.Context, id string) (domain.Skill, error)
+}
+
+// ProjectSkillRepository discovers skills that live inside a project directory.
+type ProjectSkillRepository interface {
+	ListByProject(ctx context.Context, project domain.Project) ([]domain.Skill, error)
+	GetByID(ctx context.Context, id string, project domain.Project) (domain.Skill, error)
 }
 
 // ProjectRepository persists registered projects.
