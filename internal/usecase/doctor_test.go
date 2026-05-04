@@ -28,7 +28,10 @@ func TestDoctor_Execute(t *testing.T) { //nolint:funlen
 		skillRepo := NewMockSkillRepository(t)
 		skillRepo.EXPECT().GetByID(context.Background(), skill.ID).Return(skill, nil)
 
-		uc := NewDoctor(skillRepo, NewMockProjectRepository(t), activationRepo)
+		projectRepo := NewMockProjectRepository(t)
+		projectRepo.EXPECT().List(context.Background()).Return(nil, nil)
+
+		uc := NewDoctor(skillRepo, projectRepo, activationRepo, t.TempDir())
 		report, err := uc.Execute(context.Background())
 
 		require.NoError(t, err)
@@ -47,7 +50,7 @@ func TestDoctor_Execute(t *testing.T) { //nolint:funlen
 		skillRepo := NewMockSkillRepository(t)
 		skillRepo.EXPECT().GetByID(context.Background(), "s1").Return(domain.Skill{}, dbErr)
 
-		uc := NewDoctor(skillRepo, NewMockProjectRepository(t), activationRepo)
+		uc := NewDoctor(skillRepo, NewMockProjectRepository(t), activationRepo, t.TempDir())
 		_, err := uc.Execute(context.Background())
 
 		require.ErrorIs(t, err, dbErr)
@@ -65,7 +68,10 @@ func TestDoctor_Execute(t *testing.T) { //nolint:funlen
 		skillRepo := NewMockSkillRepository(t)
 		skillRepo.EXPECT().GetByID(context.Background(), "gone-skill").Return(domain.Skill{}, domain.ErrSkillNotFound)
 
-		uc := NewDoctor(skillRepo, NewMockProjectRepository(t), activationRepo)
+		projectRepo := NewMockProjectRepository(t)
+		projectRepo.EXPECT().List(context.Background()).Return(nil, nil)
+
+		uc := NewDoctor(skillRepo, projectRepo, activationRepo, t.TempDir())
 		report, err := uc.Execute(context.Background())
 
 		require.NoError(t, err)
@@ -81,7 +87,7 @@ func TestDoctor_Execute(t *testing.T) { //nolint:funlen
 		activationRepo := NewMockActivationRepository(t)
 		activationRepo.EXPECT().List(context.Background(), ActivationFilter{}).Return(nil, dbErr)
 
-		uc := NewDoctor(NewMockSkillRepository(t), NewMockProjectRepository(t), activationRepo)
+		uc := NewDoctor(NewMockSkillRepository(t), NewMockProjectRepository(t), activationRepo, t.TempDir())
 		_, err := uc.Execute(context.Background())
 
 		require.ErrorIs(t, err, dbErr)
@@ -95,7 +101,7 @@ func TestDoctor_Execute(t *testing.T) { //nolint:funlen
 		activationRepo.EXPECT().List(context.Background(), ActivationFilter{}).Return(nil, nil)
 		activationRepo.EXPECT().List(context.Background(), ActivationFilter{Scope: domain.ScopeProject}).Return(nil, dbErr)
 
-		uc := NewDoctor(NewMockSkillRepository(t), NewMockProjectRepository(t), activationRepo)
+		uc := NewDoctor(NewMockSkillRepository(t), NewMockProjectRepository(t), activationRepo, t.TempDir())
 		_, err := uc.Execute(context.Background())
 
 		require.ErrorIs(t, err, dbErr)
@@ -119,7 +125,9 @@ func TestDoctor_Execute(t *testing.T) { //nolint:funlen
 		projectRepo := NewMockProjectRepository(t)
 		projectRepo.EXPECT().GetByID(context.Background(), projID).Return(domain.Project{}, domain.ErrProjectNotFound)
 
-		uc := NewDoctor(skillRepo, projectRepo, activationRepo)
+		projectRepo.EXPECT().List(context.Background()).Return(nil, nil)
+
+		uc := NewDoctor(skillRepo, projectRepo, activationRepo, t.TempDir())
 		report, err := uc.Execute(context.Background())
 
 		require.NoError(t, err)

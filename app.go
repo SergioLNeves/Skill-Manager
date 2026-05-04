@@ -3,17 +3,25 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
+	"path/filepath"
 
 	"skill-manager/internal/binding"
+	"skill-manager/internal/config"
 	"skill-manager/internal/di"
+	"skill-manager/internal/logger"
+	"skill-manager/internal/watcher"
 )
 
 // App is the Wails application struct.
 // All public methods are exposed to the frontend via the generated wailsjs bindings.
 type App struct {
-	ctx       context.Context
-	container *di.Container
+	ctx         context.Context
+	cancel      context.CancelFunc
+	container   *di.Container
+	logCleanup  func()
+	settingsPath string
 }
 
 func NewApp() *App {
@@ -21,30 +29,93 @@ func NewApp() *App {
 }
 
 func (a *App) startup(ctx context.Context) {
-	a.ctx = ctx
+	a.ctx, a.cancel = context.WithCancel(ctx)
 
-	skillsHome, dbPath, err := di.DefaultPaths()
+	home, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "skills-manager: resolve paths: %v\n", err)
-		return
-	}
-	if err = os.MkdirAll(skillsHome, 0o755); err != nil {
-		fmt.Fprintf(os.Stderr, "skills-manager: mkdir skills home: %v\n", err)
+		fmt.Fprintf(os.Stderr, "skills-manager: user home dir: %v\n", err)
 		return
 	}
 
+	base := filepath.Join(home, ".skills-manager")
+	a.settingsPath = filepath.Join(base, "settings.json")
+
+	// Structured logging.
+	cleanup, err := logger.Init(filepath.Join(base, "logs"))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "skills-manager: init logger: %v\n", err)
+	}
+	a.logCleanup = cleanup
+	slog.Info("skills-manager starting")
+
+	// Settings.
+	cfg, err := config.Load(a.settingsPath, config.DefaultSettings(home))
+	if err != nil {
+		slog.Warn("failed to load settings, using defaults", "err", err)
+		cfg = config.DefaultSettings(home)
+	}
+
+	skillsHome := cfg.SkillsHome
+	if env := os.Getenv("SKILLS_MANAGER_HOME"); env != "" {
+		skillsHome = env
+		slog.Info("overriding skills home from env", "path", skillsHome)
+	}
+
+	if err = os.MkdirAll(skillsHome, 0o755); err != nil {
+		slog.Error("cannot create skills home", "path", skillsHome, "err", err)
+		return
+	}
+
+	dbPath := filepath.Join(base, "registry.db")
 	container, err := di.Wire(skillsHome, dbPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "skills-manager: wire container: %v\n", err)
+		slog.Error("wire container failed", "err", err)
 		return
 	}
 	a.container = container
+
+	// File watcher for skills directory.
+	sw, err := watcher.NewSkillsWatcher(skillsHome, func() {
+		slog.Info("skills directory changed")
+		// The frontend re-fetches via TanStack Query on the next focus/poll;
+		// future work: push a Wails event here.
+	})
+	if err != nil {
+		slog.Warn("skills watcher unavailable", "err", err)
+	} else {
+		go sw.Run(a.ctx)
+	}
+
+	slog.Info("skills-manager ready", "skillsHome", skillsHome, "db", dbPath)
 }
 
 func (a *App) shutdown(_ context.Context) {
+	if a.cancel != nil {
+		a.cancel()
+	}
 	if a.container != nil && a.container.DB != nil {
 		a.container.DB.Close()
 	}
+	if a.logCleanup != nil {
+		a.logCleanup()
+	}
+}
+
+// --- Settings ---
+
+// GetSettings returns the current user settings.
+func (a *App) GetSettings() (config.Settings, error) {
+	home, _ := os.UserHomeDir()
+	return config.Load(a.settingsPath, config.DefaultSettings(home))
+}
+
+// SaveSettings persists updated settings.
+func (a *App) SaveSettings(s config.Settings) error {
+	if err := config.Save(a.settingsPath, s); err != nil {
+		return fmt.Errorf("save settings: %w", err)
+	}
+	slog.Info("settings saved", "workspaceRoots", s.WorkspaceRoots)
+	return nil
 }
 
 // --- Skills ---

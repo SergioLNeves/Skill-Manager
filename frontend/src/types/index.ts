@@ -84,6 +84,11 @@ export interface DoctorReport {
   issues: DoctorIssue[]
 }
 
+export interface Settings {
+  workspaceRoots: string[]
+  skillsHome: string
+}
+
 export const AGENT_CLAUDE = 'claude'
 export const AGENT_COPILOT = 'copilot'
 

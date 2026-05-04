@@ -10,6 +10,7 @@ const navLinks = [
   { to: '/', label: 'Skills' },
   { to: '/projects', label: 'Projects' },
   { to: '/doctor', label: 'Doctor' },
+  { to: '/settings', label: 'Settings' },
 ]
 
 export const Route = createRootRoute({

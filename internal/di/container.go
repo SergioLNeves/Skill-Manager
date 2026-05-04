@@ -60,7 +60,7 @@ func Wire(skillsHome, dbPath string) (*Container, error) {
 	activateSkill := usecase.NewActivateSkill(skillRepo, projectRepo, activationRepo, adapters)
 	deactivateSkill := usecase.NewDeactivateSkill(skillRepo, projectRepo, activationRepo, adapters)
 	resolveConflict := usecase.NewResolveConflict(projectRepo, skillRepo, activationRepo, adapters)
-	doctor := usecase.NewDoctor(skillRepo, projectRepo, activationRepo)
+	doctor := usecase.NewDoctor(skillRepo, projectRepo, activationRepo, homeDir)
 
 	return &Container{
 		DB:          db,
