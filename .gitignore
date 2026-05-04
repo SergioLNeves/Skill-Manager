@@ -1,5 +1,17 @@
+# Build output
 build/bin
-node_modules
-frontend/dist
-coverage.out
 /skill-manager
+
+# Go
+coverage.out
+
+# Frontend build output (keep .gitkeep so //go:embed all:frontend/dist works in CI)
+frontend/dist/*
+!frontend/dist/.gitkeep
+
+# Frontend misc
+node_modules
+frontend/package.json.md5
+
+# Wails generated runtime (regenerado por `wails generate module` / `wails dev`)
+frontend/wailsjs/runtime/
