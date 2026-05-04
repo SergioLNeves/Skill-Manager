@@ -29,14 +29,10 @@ func (r *SkillCacheRepository) UpsertSkill(ctx context.Context, name, descriptio
 }
 
 func (r *SkillCacheRepository) UpsertLocation(ctx context.Context, skillName, source, projectID, path string) error {
-	var pid interface{}
-	if projectID != "" {
-		pid = projectID
-	}
 	_, err := r.db.ExecContext(ctx,
 		`INSERT INTO skill_locations(skill_name, source, project_id, path) VALUES(?,?,?,?)
-		 ON CONFLICT(skill_name, source, COALESCE(project_id,'')) DO UPDATE SET path=excluded.path`,
-		skillName, source, pid, path,
+		 ON CONFLICT(skill_name, source, project_id) DO UPDATE SET path=excluded.path`,
+		skillName, source, projectID, path,
 	)
 	return err
 }
@@ -82,9 +78,8 @@ func (r *SkillCacheRepository) ListAggregated(ctx context.Context) ([]usecase.Ag
 	var order []string
 
 	for rows.Next() {
-		var name, description, source, path string
+		var name, description, source, projectID, path string
 		var updatedAt time.Time
-		var projectID sql.NullString
 
 		if err := rows.Scan(&name, &description, &updatedAt, &source, &projectID, &path); err != nil {
 			return nil, err
@@ -104,16 +99,16 @@ func (r *SkillCacheRepository) ListAggregated(ctx context.Context) ([]usecase.Ag
 		if source == "global" {
 			agg.IsGlobal = true
 			agg.GlobalPath = path
-		} else if projectID.Valid {
-			p, err := r.projectRepo.GetByID(ctx, projectID.String)
-			pName := projectID.String
+		} else if projectID != "" {
+			p, err := r.projectRepo.GetByID(ctx, projectID)
+			pName := projectID
 			pPath := ""
 			if err == nil {
 				pName = p.Name
 				pPath = p.Path
 			}
 			agg.Projects = append(agg.Projects, usecase.SkillProjectRef{
-				ID:   projectID.String,
+				ID:   projectID,
 				Name: pName,
 				Path: pPath,
 			})
