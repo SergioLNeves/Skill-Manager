@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
+	"sync/atomic"
 
 	_ "modernc.org/sqlite" // register sqlite driver
 )
@@ -32,13 +33,20 @@ func Open(dsn string) (*sql.DB, error) {
 	return db, nil
 }
 
-// OpenMemory returns an in-memory database intended for tests.
-// It pins to a single connection so all operations share the same DB instance.
+var memCounter atomic.Int64
+
+// OpenMemory returns a named in-memory database for tests.
+// Each call returns an isolated instance via a unique name so parallel tests
+// do not share connections or schema state.
 func OpenMemory() (*sql.DB, error) {
-	db, err := Open("file::memory:?_fk=1")
+	n := memCounter.Add(1)
+	dsn := fmt.Sprintf("file:testdb%d?mode=memory&cache=shared&_fk=1", n)
+	db, err := Open(dsn)
 	if err != nil {
 		return nil, err
 	}
+	// Pin to one connection: the shared-cache in-memory DB exists only while at
+	// least one connection is open, and all readers must use the same process cache.
 	db.SetMaxOpenConns(1)
 	return db, nil
 }
