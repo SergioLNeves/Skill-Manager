@@ -1,6 +1,7 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { createRouter, RouterProvider } from '@tanstack/react-router'
+import { NuqsAdapter } from 'nuqs/adapters/react'
 import { routeTree } from './routeTree.gen'
 import './index.css'
 
@@ -15,6 +16,8 @@ const container = document.getElementById('root')
 
 createRoot(container!).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <NuqsAdapter>
+      <RouterProvider router={router} />
+    </NuqsAdapter>
   </React.StrictMode>
 )

@@ -7,6 +7,7 @@ import {
 import { api } from './bindings'
 import type {
   Skill,
+  AggregatedSkill,
   Project,
   ProjectCandidate,
   Activation,
@@ -36,7 +37,7 @@ export function useSkills(): UseQueryResult<Skill[]> {
   return useQuery({ queryKey: keys.skills, queryFn: api.listSkills })
 }
 
-export function useAllSkills(): UseQueryResult<Skill[]> {
+export function useAllSkills(): UseQueryResult<AggregatedSkill[]> {
   return useQuery({ queryKey: keys.allSkills, queryFn: api.listAllSkills })
 }
 

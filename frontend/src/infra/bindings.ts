@@ -6,6 +6,7 @@
 
 import type {
   Skill,
+  AggregatedSkill,
   Project,
   ProjectCandidate,
   Activation,
@@ -29,8 +30,9 @@ function call<T>(method: string, ...args: unknown[]): Promise<T> {
 
 export const api = {
   // Skills
+  readSkillContent: (path: string) => call<string>('ReadSkillContent', path),
   listSkills: () => call<Skill[]>('ListSkills'),
-  listAllSkills: () => call<Skill[]>('ListAllSkills'),
+  listAllSkills: () => call<AggregatedSkill[]>('ListAllSkills'),
   listProjectSkills: (projectId: string) => call<Skill[]>('ListProjectSkills', projectId),
   copySkill: (req: CopySkillRequest) => call<void>('CopySkill', req),
   deleteSkill: (req: DeleteSkillRequest) => call<void>('DeleteSkill', req),

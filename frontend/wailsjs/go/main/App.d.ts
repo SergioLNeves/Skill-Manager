@@ -19,13 +19,15 @@ export function GetSettings():Promise<config.Settings>;
 
 export function ListActivations(arg1:binding.ActivationFilterDTO):Promise<Array<binding.ActivationDTO>>;
 
-export function ListAllSkills():Promise<Array<binding.SkillDTO>>;
+export function ListAllSkills():Promise<Array<binding.AggregatedSkillDTO>>;
 
 export function ListProjectSkills(arg1:string):Promise<Array<binding.SkillDTO>>;
 
 export function ListProjects():Promise<Array<binding.ProjectDTO>>;
 
 export function ListSkills():Promise<Array<binding.SkillDTO>>;
+
+export function ReadSkillContent(arg1:string):Promise<string>;
 
 export function RegisterProject(arg1:binding.RegisterProjectRequestDTO):Promise<binding.ProjectDTO>;
 

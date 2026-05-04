@@ -13,9 +13,10 @@ type CopySkillRequest struct {
 	SkillID         string
 	SourceProjectID string // empty when skill is global
 	TargetProjectID string
+	Agent           string // "claude" or "copilot"
 }
 
-// CopySkill physically copies a skill directory into a target project's skills/ folder.
+// CopySkill physically copies a skill directory into a target project's agent skills folder.
 type CopySkill struct {
 	skills        SkillRepository
 	projects      ProjectRepository
@@ -27,7 +28,7 @@ func NewCopySkill(skills SkillRepository, projects ProjectRepository, projectSki
 }
 
 func (uc *CopySkill) Execute(ctx context.Context, req CopySkillRequest) error {
-	srcPath, err := resolveSkillPath(ctx, req.SkillID, req.SourceProjectID, uc.skills, uc.projects, uc.projectSkills)
+	srcDir, err := resolveSkillPath(ctx, req.SkillID, req.SourceProjectID, uc.skills, uc.projects, uc.projectSkills)
 	if err != nil {
 		return fmt.Errorf("copy skill: resolve source: %w", err)
 	}
@@ -37,14 +38,28 @@ func (uc *CopySkill) Execute(ctx context.Context, req CopySkillRequest) error {
 		return fmt.Errorf("copy skill: resolve target project: %w", err)
 	}
 
-	srcDir := filepath.Dir(srcPath)
-	dstDir := filepath.Join(target.Path, "skills", filepath.Base(srcDir))
+	dstParent := agentSkillsDir(target.Path, req.Agent)
+	dstDir := filepath.Join(dstParent, filepath.Base(srcDir))
 
 	if _, err := os.Stat(dstDir); err == nil {
 		return fmt.Errorf("copy skill: destination already exists: %s", dstDir)
 	}
 
+	if err := os.MkdirAll(dstParent, 0o755); err != nil {
+		return fmt.Errorf("copy skill: create destination dir: %w", err)
+	}
+
 	return copyDir(srcDir, dstDir)
+}
+
+// agentSkillsDir returns the skills directory for the given agent inside a project.
+func agentSkillsDir(projectPath, agent string) string {
+	switch agent {
+	case "copilot":
+		return filepath.Join(projectPath, ".github", "skills")
+	default: // "claude" and anything else
+		return filepath.Join(projectPath, ".claude", "skills")
+	}
 }
 
 func copyDir(src, dst string) error {
@@ -93,7 +108,7 @@ func copyFile(src, dst string) error {
 	return closeErr
 }
 
-// resolveSkillPath returns the absolute path to SKILL.md for the given skillID,
+// resolveSkillPath returns the absolute directory path of the skill for the given skillID,
 // searching first global then project repositories.
 func resolveSkillPath(ctx context.Context, skillID, projectID string, skills SkillRepository, projects ProjectRepository, projectSkills ProjectSkillRepository) (string, error) {
 	if s, err := skills.GetByID(ctx, skillID); err == nil {

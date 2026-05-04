@@ -63,25 +63,26 @@ func (b *SkillsBinding) ListByProject(ctx context.Context, projectID string) ([]
 	return dtos, nil
 }
 
-// ListAll returns every skill from all registered projects plus global sources.
-func (b *SkillsBinding) ListAll(ctx context.Context) ([]SkillDTO, error) {
+// ListAll returns every skill aggregated and deduplicated via the SQLite cache.
+func (b *SkillsBinding) ListAll(ctx context.Context) ([]AggregatedSkillDTO, error) {
 	skills, err := b.listAll.Execute(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("skills binding: list all: %w", err)
 	}
-	dtos := make([]SkillDTO, len(skills))
+	dtos := make([]AggregatedSkillDTO, len(skills))
 	for i, s := range skills {
-		dtos[i] = toSkillWithProjectDTO(s)
+		dtos[i] = toAggregatedSkillDTO(s)
 	}
 	return dtos, nil
 }
 
-// CopySkill copies a skill directory into the target project's skills/ folder.
+// CopySkill copies a skill directory into the target project's agent skills folder.
 func (b *SkillsBinding) CopySkill(ctx context.Context, req CopySkillRequestDTO) error {
 	return b.copySkill.Execute(ctx, usecase.CopySkillRequest{
 		SkillID:         req.SkillID,
 		SourceProjectID: req.SourceProjectID,
 		TargetProjectID: req.TargetProjectID,
+		Agent:           req.Agent,
 	})
 }
 

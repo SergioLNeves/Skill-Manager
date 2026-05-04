@@ -50,6 +50,10 @@ export function ListSkills() {
   return window['go']['main']['App']['ListSkills']();
 }
 
+export function ReadSkillContent(arg1) {
+  return window['go']['main']['App']['ReadSkillContent'](arg1);
+}
+
 export function RegisterProject(arg1) {
   return window['go']['main']['App']['RegisterProject'](arg1);
 }

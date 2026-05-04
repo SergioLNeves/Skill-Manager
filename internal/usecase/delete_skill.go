@@ -39,7 +39,7 @@ func (uc *DeleteSkill) Execute(ctx context.Context, req DeleteSkillRequest) erro
 		return fmt.Errorf("delete skill: resolve: %w", err)
 	}
 
-	skillDir := filepath.Dir(skillPath)
+	skillDir := skillPath
 	skillName := filepath.Base(skillDir)
 	timestamp := time.Now().UTC().Format("20060102T150405Z")
 	backupDst := filepath.Join(req.TrashDir, fmt.Sprintf("%s-%s", skillName, timestamp))

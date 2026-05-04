@@ -81,7 +81,10 @@ func (a *App) startup(ctx context.Context) {
 	// File watcher for the first global skill source directory.
 	if len(globalSources) > 0 {
 		sw, err := watcher.NewSkillsWatcher(globalSources[0], func() {
-			slog.Info("skills directory changed")
+			slog.Info("skills directory changed — refreshing cache")
+			if a.container != nil {
+				_ = a.container.RefreshCache.Execute(a.ctx)
+			}
 		})
 		if err != nil {
 			slog.Warn("skills watcher unavailable", "err", err)
@@ -143,6 +146,15 @@ func (a *App) ready() error {
 
 // --- Skills ---
 
+// ReadSkillContent reads the raw text content of a skill file at the given path.
+func (a *App) ReadSkillContent(path string) (string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("read skill content: %w", err)
+	}
+	return string(data), nil
+}
+
 func (a *App) ListSkills() ([]binding.SkillDTO, error) {
 	if err := a.ready(); err != nil {
 		return nil, err
@@ -157,7 +169,7 @@ func (a *App) ListProjectSkills(projectID string) ([]binding.SkillDTO, error) {
 	return a.container.Skills.ListByProject(a.ctx, projectID)
 }
 
-func (a *App) ListAllSkills() ([]binding.SkillDTO, error) {
+func (a *App) ListAllSkills() ([]binding.AggregatedSkillDTO, error) {
 	if err := a.ready(); err != nil {
 		return nil, err
 	}

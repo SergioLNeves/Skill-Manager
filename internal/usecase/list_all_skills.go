@@ -3,51 +3,30 @@ package usecase
 import (
 	"context"
 	"fmt"
-
-	"skill-manager/internal/domain"
 )
 
-// SkillWithProject bundles a skill with its owning project name for display.
-type SkillWithProject struct {
-	domain.Skill
-	OwnerProjectName string
+// SkillCacheReader is implemented by the SQLite skill cache repository.
+type SkillCacheReader interface {
+	ListAggregated(ctx context.Context) ([]AggregatedSkill, error)
 }
 
-// ListAllSkills aggregates global skills plus all project skills across every registered project.
+// ListAllSkills returns skills aggregated from the SQLite cache (refreshed on each call).
 type ListAllSkills struct {
-	skills        SkillRepository
-	projects      ProjectRepository
-	projectSkills ProjectSkillRepository
+	refresh *RefreshSkillCache
+	cache   SkillCacheReader
 }
 
-func NewListAllSkills(skills SkillRepository, projects ProjectRepository, projectSkills ProjectSkillRepository) *ListAllSkills {
-	return &ListAllSkills{skills: skills, projects: projects, projectSkills: projectSkills}
+func NewListAllSkills(refresh *RefreshSkillCache, cache SkillCacheReader) *ListAllSkills {
+	return &ListAllSkills{refresh: refresh, cache: cache}
 }
 
-func (uc *ListAllSkills) Execute(ctx context.Context) ([]SkillWithProject, error) {
-	var result []SkillWithProject
-
-	globals, err := uc.skills.List(ctx)
+func (uc *ListAllSkills) Execute(ctx context.Context) ([]AggregatedSkill, error) {
+	if err := uc.refresh.Execute(ctx); err != nil {
+		return nil, fmt.Errorf("list all skills: refresh cache: %w", err)
+	}
+	skills, err := uc.cache.ListAggregated(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("list all skills: globals: %w", err)
+		return nil, fmt.Errorf("list all skills: read cache: %w", err)
 	}
-	for _, s := range globals {
-		result = append(result, SkillWithProject{Skill: s})
-	}
-
-	projects, err := uc.projects.List(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list all skills: projects: %w", err)
-	}
-	for _, p := range projects {
-		skills, err := uc.projectSkills.ListByProject(ctx, p)
-		if err != nil {
-			continue // skip unreachable project directories
-		}
-		for _, s := range skills {
-			result = append(result, SkillWithProject{Skill: s, OwnerProjectName: p.Name})
-		}
-	}
-
-	return result, nil
+	return skills, nil
 }

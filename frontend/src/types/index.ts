@@ -9,10 +9,26 @@ export interface Skill {
   updatedAt: string
 }
 
+export interface SkillProjectRef {
+  id: string
+  name: string
+  path: string
+}
+
+export interface AggregatedSkill {
+  name: string
+  description: string
+  isGlobal: boolean
+  globalPath: string
+  projects: SkillProjectRef[]
+  updatedAt: string
+}
+
 export interface CopySkillRequest {
   skillId: string
   sourceProjectId: string
   targetProjectId: string
+  agent: 'claude' | 'copilot'
 }
 
 export interface DeleteSkillRequest {

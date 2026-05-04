@@ -19,11 +19,29 @@ type SkillDTO struct {
 	UpdatedAt        string `json:"updatedAt"`
 }
 
+// AggregatedSkillDTO is the frontend representation of a deduplicated skill with all locations.
+type AggregatedSkillDTO struct {
+	Name        string              `json:"name"`
+	Description string              `json:"description"`
+	IsGlobal    bool                `json:"isGlobal"`
+	GlobalPath  string              `json:"globalPath"`
+	Projects    []SkillProjectRef   `json:"projects"`
+	UpdatedAt   string              `json:"updatedAt"`
+}
+
+// SkillProjectRef is a lightweight project reference inside an aggregated skill.
+type SkillProjectRef struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Path string `json:"path"`
+}
+
 // CopySkillRequestDTO carries a skill copy request from the frontend.
 type CopySkillRequestDTO struct {
 	SkillID         string `json:"skillId"`
 	SourceProjectID string `json:"sourceProjectId"`
 	TargetProjectID string `json:"targetProjectId"`
+	Agent           string `json:"agent"` // "claude" or "copilot"
 }
 
 // DeleteSkillRequestDTO carries a skill deletion request from the frontend.
@@ -127,10 +145,19 @@ func toSkillDTO(s domain.Skill) SkillDTO {
 	}
 }
 
-func toSkillWithProjectDTO(s usecase.SkillWithProject) SkillDTO {
-	dto := toSkillDTO(s.Skill)
-	dto.OwnerProjectName = s.OwnerProjectName
-	return dto
+func toAggregatedSkillDTO(s usecase.AggregatedSkill) AggregatedSkillDTO {
+	refs := make([]SkillProjectRef, len(s.Projects))
+	for i, p := range s.Projects {
+		refs[i] = SkillProjectRef{ID: p.ID, Name: p.Name, Path: p.Path}
+	}
+	return AggregatedSkillDTO{
+		Name:        s.Name,
+		Description: s.Description,
+		IsGlobal:    s.IsGlobal,
+		GlobalPath:  s.GlobalPath,
+		Projects:    refs,
+		UpdatedAt:   s.UpdatedAt.UTC().Format(time.RFC3339),
+	}
 }
 
 func toProjectDTO(p domain.Project) ProjectDTO {

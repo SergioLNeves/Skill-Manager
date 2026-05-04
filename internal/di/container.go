@@ -23,11 +23,11 @@ type Container struct {
 	Projects    *binding.ProjectsBinding
 	Activations *binding.ActivationBinding
 	Doctor      *binding.DoctorBinding
+
+	RefreshCache *usecase.RefreshSkillCache
 }
 
 // Wire builds the full dependency graph and returns a ready Container.
-// globalSkillSources is the list of directories to scan for global skills.
-// dbPath is the path to the SQLite registry.
 func Wire(globalSkillSources []string, dbPath string) (*Container, error) {
 	db, err := persistence.Open(dbPath)
 	if err != nil {
@@ -40,6 +40,7 @@ func Wire(globalSkillSources []string, dbPath string) (*Container, error) {
 	projectRepo := persistence.NewProjectRepository(db)
 	activationRepo := persistence.NewActivationRepository(db)
 	projectScanner := filesystem.NewProjectScanner(afero.NewOsFs())
+	skillCacheRepo := persistence.NewSkillCacheRepository(db, projectRepo)
 
 	// Agent adapters
 	homeDir, err := os.UserHomeDir()
@@ -55,7 +56,8 @@ func Wire(globalSkillSources []string, dbPath string) (*Container, error) {
 	// Use cases
 	listSkills := usecase.NewListSkills(skillRepo)
 	listProjectSkills := usecase.NewListProjectSkills(projectRepo, projectSkillRepo)
-	listAllSkills := usecase.NewListAllSkills(skillRepo, projectRepo, projectSkillRepo)
+	refreshCache := usecase.NewRefreshSkillCache(skillRepo, projectRepo, projectSkillRepo, skillCacheRepo)
+	listAllSkills := usecase.NewListAllSkills(refreshCache, skillCacheRepo)
 	copySkill := usecase.NewCopySkill(skillRepo, projectRepo, projectSkillRepo)
 	deleteSkill := usecase.NewDeleteSkill(skillRepo, projectRepo, projectSkillRepo, activationRepo)
 	listProjects := usecase.NewListProjects(projectRepo)
@@ -68,11 +70,12 @@ func Wire(globalSkillSources []string, dbPath string) (*Container, error) {
 	doctor := usecase.NewDoctor(skillRepo, projectRepo, activationRepo, homeDir)
 
 	return &Container{
-		DB:          db,
-		Skills:      binding.NewSkillsBinding(listSkills, listProjectSkills, listAllSkills, copySkill, deleteSkill),
-		Projects:    binding.NewProjectsBinding(listProjects, registerProject, scanProjects, deleteProject),
-		Activations: binding.NewActivationBinding(activateSkill, deactivateSkill, resolveConflict, activationRepo),
-		Doctor:      binding.NewDoctorBinding(doctor),
+		DB:           db,
+		RefreshCache: refreshCache,
+		Skills:       binding.NewSkillsBinding(listSkills, listProjectSkills, listAllSkills, copySkill, deleteSkill),
+		Projects:     binding.NewProjectsBinding(listProjects, registerProject, scanProjects, deleteProject),
+		Activations:  binding.NewActivationBinding(activateSkill, deactivateSkill, resolveConflict, activationRepo),
+		Doctor:       binding.NewDoctorBinding(doctor),
 	}, nil
 }
 
