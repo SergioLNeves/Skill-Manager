@@ -15,6 +15,8 @@ export function DeleteProject(arg1:string):Promise<void>;
 
 export function DeleteSkill(arg1:binding.DeleteSkillRequestDTO):Promise<void>;
 
+export function FixIssue(arg1:binding.DoctorIssueDTO):Promise<void>;
+
 export function GetSettings():Promise<config.Settings>;
 
 export function ListActivations(arg1:binding.ActivationFilterDTO):Promise<Array<binding.ActivationDTO>>;

@@ -68,6 +68,7 @@ func Wire(globalSkillSources []string, dbPath string) (*Container, error) {
 	deactivateSkill := usecase.NewDeactivateSkill(skillRepo, projectSkillRepo, projectRepo, activationRepo, adapters)
 	resolveConflict := usecase.NewResolveConflict(projectRepo, skillRepo, projectSkillRepo, activationRepo, adapters)
 	doctor := usecase.NewDoctor(skillRepo, projectRepo, activationRepo, homeDir)
+	fixIssue := usecase.NewFixIssue(activationRepo, projectRepo)
 
 	return &Container{
 		DB:           db,
@@ -75,7 +76,7 @@ func Wire(globalSkillSources []string, dbPath string) (*Container, error) {
 		Skills:       binding.NewSkillsBinding(listSkills, listProjectSkills, listAllSkills, copySkill, deleteSkill),
 		Projects:     binding.NewProjectsBinding(listProjects, registerProject, scanProjects, deleteProject),
 		Activations:  binding.NewActivationBinding(activateSkill, deactivateSkill, resolveConflict, activationRepo),
-		Doctor:       binding.NewDoctorBinding(doctor),
+		Doctor:       binding.NewDoctorBinding(doctor, fixIssue),
 	}, nil
 }
 

@@ -64,9 +64,12 @@ type ProjectScanner interface {
 
 // DoctorIssue describes a detected inconsistency.
 type DoctorIssue struct {
-	Kind    string
-	Detail  string
-	Fixable bool
+	Kind     string            // machine-readable category
+	Title    string            // short human-readable title
+	Detail   string            // full description of what is wrong
+	HowToFix string            // what the auto-fix will do
+	Fixable  bool
+	FixData  map[string]string // data needed to execute the fix
 }
 
 // DoctorReport is the result of a health check run.

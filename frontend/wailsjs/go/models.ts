@@ -131,6 +131,7 @@ export namespace binding {
 	    id: string;
 	    name: string;
 	    path: string;
+	    skillPath: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new SkillProjectRef(source);
@@ -141,6 +142,7 @@ export namespace binding {
 	        this.id = source["id"];
 	        this.name = source["name"];
 	        this.path = source["path"];
+	        this.skillPath = source["skillPath"];
 	    }
 	}
 	export class AggregatedSkillDTO {
@@ -218,8 +220,11 @@ export namespace binding {
 	}
 	export class DoctorIssueDTO {
 	    kind: string;
+	    title: string;
 	    detail: string;
+	    howToFix: string;
 	    fixable: boolean;
+	    fixData: Record<string, string>;
 	
 	    static createFrom(source: any = {}) {
 	        return new DoctorIssueDTO(source);
@@ -228,8 +233,11 @@ export namespace binding {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.kind = source["kind"];
+	        this.title = source["title"];
 	        this.detail = source["detail"];
+	        this.howToFix = source["howToFix"];
 	        this.fixable = source["fixable"];
+	        this.fixData = source["fixData"];
 	    }
 	}
 	export class DoctorReportDTO {

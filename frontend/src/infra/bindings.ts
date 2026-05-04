@@ -16,6 +16,7 @@ import type {
   ResolveConflictRequest,
   RegisterProjectRequest,
   DoctorReport,
+  DoctorIssue,
   CopySkillRequest,
   DeleteSkillRequest,
 } from '@/types'
@@ -57,4 +58,5 @@ export const api = {
 
   // Doctor
   runDoctor: () => call<DoctorReport>('RunDoctor'),
+  fixIssue: (issue: DoctorIssue) => call<void>('FixIssue', issue),
 }

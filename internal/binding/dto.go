@@ -116,9 +116,12 @@ type ResolveConflictRequestDTO struct {
 
 // DoctorIssueDTO describes a single consistency problem.
 type DoctorIssueDTO struct {
-	Kind    string `json:"kind"`
-	Detail  string `json:"detail"`
-	Fixable bool   `json:"fixable"`
+	Kind     string            `json:"kind"`
+	Title    string            `json:"title"`
+	Detail   string            `json:"detail"`
+	HowToFix string            `json:"howToFix"`
+	Fixable  bool              `json:"fixable"`
+	FixData  map[string]string `json:"fixData"`
 }
 
 // DoctorReportDTO is the result of a health check run.
@@ -217,7 +220,25 @@ func toConflictDTO(c domain.Conflict) ConflictDTO {
 func toDoctorReportDTO(r usecase.DoctorReport) DoctorReportDTO {
 	issues := make([]DoctorIssueDTO, len(r.Issues))
 	for i, iss := range r.Issues {
-		issues[i] = DoctorIssueDTO{Kind: iss.Kind, Detail: iss.Detail, Fixable: iss.Fixable}
+		issues[i] = DoctorIssueDTO{
+			Kind:     iss.Kind,
+			Title:    iss.Title,
+			Detail:   iss.Detail,
+			HowToFix: iss.HowToFix,
+			Fixable:  iss.Fixable,
+			FixData:  iss.FixData,
+		}
 	}
 	return DoctorReportDTO{Issues: issues}
+}
+
+func fromDoctorIssueDTO(dto DoctorIssueDTO) usecase.DoctorIssue {
+	return usecase.DoctorIssue{
+		Kind:     dto.Kind,
+		Title:    dto.Title,
+		Detail:   dto.Detail,
+		HowToFix: dto.HowToFix,
+		Fixable:  dto.Fixable,
+		FixData:  dto.FixData,
+	}
 }

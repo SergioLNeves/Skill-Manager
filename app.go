@@ -265,3 +265,10 @@ func (a *App) RunDoctor() (binding.DoctorReportDTO, error) {
 	}
 	return a.container.Doctor.Run(a.ctx)
 }
+
+func (a *App) FixIssue(issue binding.DoctorIssueDTO) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
+	return a.container.Doctor.Fix(a.ctx, issue)
+}

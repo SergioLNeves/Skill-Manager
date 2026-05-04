@@ -17,6 +17,7 @@ import type {
   ResolveConflictRequest,
   RegisterProjectRequest,
   DoctorReport,
+  DoctorIssue,
   CopySkillRequest,
   DeleteSkillRequest,
 } from '@/types'
@@ -161,5 +162,13 @@ export function useRunDoctor() {
   return useMutation<DoctorReport, Error>({
     mutationFn: api.runDoctor,
     onSuccess: (data) => qc.setQueryData(keys.doctor, data),
+  })
+}
+
+export function useFixIssue() {
+  const qc = useQueryClient()
+  return useMutation<void, Error, DoctorIssue>({
+    mutationFn: api.fixIssue,
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.doctor }),
   })
 }

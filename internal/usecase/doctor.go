@@ -15,7 +15,7 @@ type Doctor struct {
 	skills      SkillRepository
 	projects    ProjectRepository
 	activations ActivationRepository
-	homeDir     string // user home, used to locate managed symlink directories
+	homeDir     string
 }
 
 func NewDoctor(
@@ -51,7 +51,6 @@ func (uc *Doctor) Execute(ctx context.Context) (DoctorReport, error) {
 	return report, nil
 }
 
-// checkOrphanedActivations finds activations whose skill no longer exists.
 func (uc *Doctor) checkOrphanedActivations(ctx context.Context, report *DoctorReport) error {
 	all, err := uc.activations.List(ctx, ActivationFilter{})
 	if err != nil {
@@ -60,55 +59,55 @@ func (uc *Doctor) checkOrphanedActivations(ctx context.Context, report *DoctorRe
 
 	for _, a := range all {
 		if _, err := uc.skills.GetByID(ctx, a.SkillID); err != nil {
-			if errors.Is(err, domain.ErrSkillNotFound) {
-				report.Issues = append(report.Issues, DoctorIssue{
-					Kind:    "orphaned_activation",
-					Detail:  fmt.Sprintf("skill %q no longer exists (activation id %d)", a.SkillID, a.ID),
-					Fixable: true,
-				})
-				continue
+			if !errors.Is(err, domain.ErrSkillNotFound) {
+				return fmt.Errorf("check skill %s: %w", a.SkillID, err)
 			}
-			return fmt.Errorf("check skill %s: %w", a.SkillID, err)
+			agentStr := string(a.Agent)
+			report.Issues = append(report.Issues, DoctorIssue{
+				Kind:     "orphaned_activation",
+				Title:    "Ativação órfã",
+				Detail:   fmt.Sprintf("A ativação para o agente %q (id %d) referencia uma skill que não existe mais no disco.", agentStr, a.ID),
+				HowToFix: "Remove o registro de ativação do banco de dados.",
+				Fixable:  true,
+				FixData:  map[string]string{"activation_id": fmt.Sprintf("%d", a.ID)},
+			})
 		}
 	}
 	return nil
 }
 
-// checkInvalidProjects finds project IDs referenced by activations that no longer exist in the DB.
 func (uc *Doctor) checkInvalidProjects(ctx context.Context, report *DoctorReport) error {
 	activations, err := uc.activations.List(ctx, ActivationFilter{Scope: domain.ScopeProject})
 	if err != nil {
 		return fmt.Errorf("list project activations: %w", err)
 	}
 
-	checked := map[string]bool{}
+	checked := map[string]int{}
 	for _, a := range activations {
 		if a.ProjectID == nil {
 			continue
 		}
-		id := *a.ProjectID
-		if checked[id] {
-			continue
-		}
-		checked[id] = true
+		checked[*a.ProjectID]++
+	}
 
-		if _, err := uc.projects.GetByID(ctx, id); err != nil {
-			if errors.Is(err, domain.ErrProjectNotFound) {
-				report.Issues = append(report.Issues, DoctorIssue{
-					Kind:    "missing_project",
-					Detail:  fmt.Sprintf("project %q referenced by activations no longer exists", id),
-					Fixable: true,
-				})
-				continue
+	for projectID, count := range checked {
+		if _, err := uc.projects.GetByID(ctx, projectID); err != nil {
+			if !errors.Is(err, domain.ErrProjectNotFound) {
+				return fmt.Errorf("check project %s: %w", projectID, err)
 			}
-			return fmt.Errorf("check project %s: %w", id, err)
+			report.Issues = append(report.Issues, DoctorIssue{
+				Kind:     "missing_project",
+				Title:    "Projeto removido com ativações pendentes",
+				Detail:   fmt.Sprintf("O projeto foi removido do registro, mas ainda existem %d ativação(ões) referenciando-o.", count),
+				HowToFix: "Remove as ativações órfãs do banco de dados.",
+				Fixable:  true,
+				FixData:  map[string]string{"project_id": projectID},
+			})
 		}
 	}
 	return nil
 }
 
-// checkBrokenSymlinks looks for managed symlinks in ~/.claude/skills/ and
-// project .claude/skills/ directories that point to a non-existent source.
 func (uc *Doctor) checkBrokenSymlinks(ctx context.Context, report *DoctorReport) error {
 	dirs := []string{filepath.Join(uc.homeDir, ".claude", "skills")}
 
@@ -140,9 +139,12 @@ func (uc *Doctor) checkBrokenSymlinks(ctx context.Context, report *DoctorReport)
 			}
 			if _, statErr := os.Stat(dest); os.IsNotExist(statErr) {
 				report.Issues = append(report.Issues, DoctorIssue{
-					Kind:    "broken_symlink",
-					Detail:  fmt.Sprintf("symlink %s points to missing path %s", linkPath, dest),
-					Fixable: true,
+					Kind:     "broken_symlink",
+					Title:    "Symlink quebrado",
+					Detail:   fmt.Sprintf("O symlink %q aponta para %q que não existe mais no disco.", linkPath, dest),
+					HowToFix: "Remove o symlink quebrado. A skill precisará ser reativada se quiser usá-la novamente.",
+					Fixable:  true,
+					FixData:  map[string]string{"symlink_path": linkPath},
 				})
 			}
 		}
@@ -150,7 +152,6 @@ func (uc *Doctor) checkBrokenSymlinks(ctx context.Context, report *DoctorReport)
 	return nil
 }
 
-// checkProjectPaths verifies that each registered project's path still exists on disk.
 func (uc *Doctor) checkProjectPaths(ctx context.Context, report *DoctorReport) error {
 	projects, err := uc.projects.List(ctx)
 	if err != nil {
@@ -160,12 +161,14 @@ func (uc *Doctor) checkProjectPaths(ctx context.Context, report *DoctorReport) e
 	for _, p := range projects {
 		if _, err := os.Stat(p.Path); os.IsNotExist(err) {
 			report.Issues = append(report.Issues, DoctorIssue{
-				Kind:    "missing_project_path",
-				Detail:  fmt.Sprintf("project %q path %q no longer exists on disk", p.Name, p.Path),
-				Fixable: false,
+				Kind:     "missing_project_path",
+				Title:    "Diretório do projeto não encontrado",
+				Detail:   fmt.Sprintf("O projeto %q está registrado, mas o diretório %q não existe mais no disco.", p.Name, p.Path),
+				HowToFix: "Remove o projeto do registro. Você pode adicioná-lo novamente depois se o diretório for restaurado.",
+				Fixable:  true,
+				FixData:  map[string]string{"project_id": p.ID, "project_name": p.Name},
 			})
 		}
 	}
 	return nil
 }
-

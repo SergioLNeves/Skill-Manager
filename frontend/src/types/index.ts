@@ -107,8 +107,11 @@ export interface RegisterProjectRequest {
 
 export interface DoctorIssue {
   kind: string
+  title: string
   detail: string
+  howToFix: string
   fixable: boolean
+  fixData: Record<string, string>
 }
 
 export interface DoctorReport {
