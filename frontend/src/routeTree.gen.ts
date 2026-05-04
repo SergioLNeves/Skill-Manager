@@ -14,6 +14,7 @@ import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as DoctorRouteImport } from './routes/doctor'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProjectsIndexRouteImport } from './routes/projects.index'
+import { Route as SkillsNameRouteImport } from './routes/skills.$name'
 import { Route as ProjectsIdRouteImport } from './routes/projects.$id'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -41,6 +42,11 @@ const ProjectsIndexRoute = ProjectsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ProjectsRoute,
 } as any)
+const SkillsNameRoute = SkillsNameRouteImport.update({
+  id: '/skills/$name',
+  path: '/skills/$name',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProjectsIdRoute = ProjectsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/projects': typeof ProjectsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/projects/$id': typeof ProjectsIdRoute
+  '/skills/$name': typeof SkillsNameRoute
   '/projects/': typeof ProjectsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/doctor': typeof DoctorRoute
   '/settings': typeof SettingsRoute
   '/projects/$id': typeof ProjectsIdRoute
+  '/skills/$name': typeof SkillsNameRoute
   '/projects': typeof ProjectsIndexRoute
 }
 export interface FileRoutesById {
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/projects': typeof ProjectsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/projects/$id': typeof ProjectsIdRoute
+  '/skills/$name': typeof SkillsNameRoute
   '/projects/': typeof ProjectsIndexRoute
 }
 export interface FileRouteTypes {
@@ -79,9 +88,16 @@ export interface FileRouteTypes {
     | '/projects'
     | '/settings'
     | '/projects/$id'
+    | '/skills/$name'
     | '/projects/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/doctor' | '/settings' | '/projects/$id' | '/projects'
+  to:
+    | '/'
+    | '/doctor'
+    | '/settings'
+    | '/projects/$id'
+    | '/skills/$name'
+    | '/projects'
   id:
     | '__root__'
     | '/'
@@ -89,6 +105,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/settings'
     | '/projects/$id'
+    | '/skills/$name'
     | '/projects/'
   fileRoutesById: FileRoutesById
 }
@@ -97,6 +114,7 @@ export interface RootRouteChildren {
   DoctorRoute: typeof DoctorRoute
   ProjectsRoute: typeof ProjectsRouteWithChildren
   SettingsRoute: typeof SettingsRoute
+  SkillsNameRoute: typeof SkillsNameRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -136,6 +154,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectsIndexRouteImport
       parentRoute: typeof ProjectsRoute
     }
+    '/skills/$name': {
+      id: '/skills/$name'
+      path: '/skills/$name'
+      fullPath: '/skills/$name'
+      preLoaderRoute: typeof SkillsNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/projects/$id': {
       id: '/projects/$id'
       path: '/$id'
@@ -165,6 +190,7 @@ const rootRouteChildren: RootRouteChildren = {
   DoctorRoute: DoctorRoute,
   ProjectsRoute: ProjectsRouteWithChildren,
   SettingsRoute: SettingsRoute,
+  SkillsNameRoute: SkillsNameRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
