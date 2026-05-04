@@ -35,7 +35,7 @@ function SkillDetailPage() {
 }
 
 function SkillView({ skill }: { skill: AggregatedSkill }) {
-  const primaryPath = skill.isGlobal ? skill.globalPath : skill.projects[0]?.path
+  const primaryPath = skill.isGlobal ? skill.globalPath : skill.projects[0]?.skillPath
   const contentPath = primaryPath ? `${primaryPath}/SKILL.md` : ''
 
   const [content, setContent] = useState<string | null>(null)

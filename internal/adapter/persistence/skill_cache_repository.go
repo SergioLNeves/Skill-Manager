@@ -108,9 +108,10 @@ func (r *SkillCacheRepository) ListAggregated(ctx context.Context) ([]usecase.Ag
 				pPath = p.Path
 			}
 			agg.Projects = append(agg.Projects, usecase.SkillProjectRef{
-				ID:   projectID,
-				Name: pName,
-				Path: pPath,
+				ID:        projectID,
+				Name:      pName,
+				Path:      pPath,
+				SkillPath: path, // path from skill_locations = skill directory
 			})
 		}
 	}

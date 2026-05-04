@@ -12,7 +12,8 @@ export interface Skill {
 export interface SkillProjectRef {
   id: string
   name: string
-  path: string
+  path: string      // project root path
+  skillPath: string // skill directory path (for reading SKILL.md)
 }
 
 export interface AggregatedSkill {

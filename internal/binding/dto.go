@@ -31,9 +31,10 @@ type AggregatedSkillDTO struct {
 
 // SkillProjectRef is a lightweight project reference inside an aggregated skill.
 type SkillProjectRef struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Path string `json:"path"`
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Path      string `json:"path"`      // project root path
+	SkillPath string `json:"skillPath"` // skill directory path (for reading SKILL.md)
 }
 
 // CopySkillRequestDTO carries a skill copy request from the frontend.
@@ -148,7 +149,7 @@ func toSkillDTO(s domain.Skill) SkillDTO {
 func toAggregatedSkillDTO(s usecase.AggregatedSkill) AggregatedSkillDTO {
 	refs := make([]SkillProjectRef, len(s.Projects))
 	for i, p := range s.Projects {
-		refs[i] = SkillProjectRef{ID: p.ID, Name: p.Name, Path: p.Path}
+		refs[i] = SkillProjectRef{ID: p.ID, Name: p.Name, Path: p.Path, SkillPath: p.SkillPath}
 	}
 	return AggregatedSkillDTO{
 		Name:        s.Name,
