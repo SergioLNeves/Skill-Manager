@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import remarkFrontmatter from 'remark-frontmatter'
 import { ArrowLeft, Copy, Trash2, Globe, FolderOpen } from 'lucide-react'
 import { useAllSkills, useProjects } from '@/infra/queries'
 import { api } from '@/infra/bindings'
@@ -131,7 +132,7 @@ function SkillView({ skill }: { skill: AggregatedSkill }) {
         {error && <p className="text-sm text-destructive">{error}</p>}
         {content && (
           <article className="prose prose-sm dark:prose-invert max-w-none prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-code:text-foreground prose-headings:text-foreground prose-p:text-foreground/90 prose-li:text-foreground/90 prose-strong:text-foreground">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkFrontmatter, remarkGfm]}>{content}</ReactMarkdown>
           </article>
         )}
       </div>
