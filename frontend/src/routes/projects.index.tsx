@@ -29,7 +29,7 @@ function ProjectsPage() {
     setScanning(true)
   }
 
-  if (isLoading) return <p className="text-muted-foreground">Carregando projetos…</p>
+  if (isLoading) return <p className="text-muted-foreground">Loading projects…</p>
 
   return (
     <div className="space-y-8">
@@ -37,7 +37,7 @@ function ProjectsPage() {
         <div>
           <h1 className="text-2xl font-semibold">Projects</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {projects.length} projeto{projects.length !== 1 ? 's' : ''} registrado{projects.length !== 1 ? 's' : ''}
+            {projects.length} registered project{projects.length !== 1 ? 's' : ''}
           </p>
         </div>
       </div>
@@ -46,32 +46,32 @@ function ProjectsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Search className="h-4 w-4" /> Descobrir Projetos
+            <Search className="h-4 w-4" /> Discover Projects
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {configuredRoots.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Nenhum workspace configurado. Adicione caminhos em{' '}
+              No workspace configured. Add paths in{' '}
               <Link to="/settings" className="underline hover:text-foreground">Settings → Workspace Roots</Link>.
             </p>
           ) : (
             <>
               <div className="space-y-1">
-                <p className="text-xs text-muted-foreground font-medium">Pastas configuradas:</p>
+                <p className="text-xs text-muted-foreground font-medium">Configured folders:</p>
                 {configuredRoots.map((r) => (
                   <p key={r} className="text-xs font-mono text-muted-foreground pl-2">{r}</p>
                 ))}
               </div>
               <Button size="sm" onClick={handleScan}>
-                <RefreshCw className="h-3.5 w-3.5 mr-1" /> Escanear
+                <RefreshCw className="h-3.5 w-3.5 mr-1" /> Scan
               </Button>
             </>
           )}
 
           {scanning && candidates.length > 0 && (
             <div className="mt-4 space-y-2">
-              <p className="text-sm font-medium">{candidates.length} projeto{candidates.length !== 1 ? 's' : ''} encontrado{candidates.length !== 1 ? 's' : ''}</p>
+              <p className="text-sm font-medium">{candidates.length} project{candidates.length !== 1 ? 's' : ''} found</p>
               {candidates.map((c) => {
                 const alreadyAdded = projects.some((p) => p.path === c.path)
                 return (
@@ -92,7 +92,7 @@ function ProjectsPage() {
                       onClick={() => confirmCandidate.mutate(c)}
                     >
                       <Plus className="h-3.5 w-3.5 mr-1" />
-                      {alreadyAdded ? 'Adicionado' : 'Adicionar'}
+                      {alreadyAdded ? 'Added' : 'Add'}
                     </Button>
                   </div>
                 )
@@ -100,7 +100,7 @@ function ProjectsPage() {
             </div>
           )}
           {scanning && candidates.length === 0 && configuredRoots.length > 0 && (
-            <p className="text-sm text-muted-foreground">Nenhum projeto encontrado nas pastas configuradas.</p>
+            <p className="text-sm text-muted-foreground">No projects found in the configured folders.</p>
           )}
         </CardContent>
       </Card>
@@ -109,7 +109,7 @@ function ProjectsPage() {
       {!projects.length ? (
         <div className="text-center mt-8 text-muted-foreground">
           <FolderOpen className="h-10 w-10 mx-auto mb-3 opacity-40" />
-          <p className="text-sm">Nenhum projeto registrado ainda. Use o botão acima para escanear.</p>
+          <p className="text-sm">No projects registered yet. Use the button above to scan.</p>
         </div>
       ) : (
         <div className="grid gap-3">

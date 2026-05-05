@@ -35,7 +35,7 @@ function PathList({
       const path = await SelectDirectory()
       if (path) onChange([...paths, path])
     } catch {
-      // SelectDirectory pode falhar em alguns ambientes de dev — usuário digita manualmente
+      // SelectDirectory may fail in some dev environments — user can type the path manually
     }
   }
 
@@ -62,7 +62,7 @@ function PathList({
               <Button
                 variant="outline"
                 size="icon"
-                title="Selecionar pasta"
+                title="Select folder"
                 onClick={async () => {
                   try {
                     const picked = await SelectDirectory()
@@ -79,7 +79,7 @@ function PathList({
               <Button
                 variant="outline"
                 size="icon"
-                title="Remover"
+                title="Remove"
                 onClick={() => onChange(paths.filter((_, j) => j !== i))}
               >
                 <X className="h-4 w-4" />
@@ -90,7 +90,7 @@ function PathList({
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={addViaDialog}>
             <FolderOpen className="h-4 w-4 mr-2" />
-            Selecionar pasta
+            Select folder
           </Button>
           <Button
             variant="outline"
@@ -98,7 +98,7 @@ function PathList({
             onClick={() => onChange([...paths, ''])}
           >
             <Plus className="h-4 w-4 mr-2" />
-            Digitar caminho
+            Enter path
           </Button>
         </div>
       </CardContent>
@@ -135,27 +135,27 @@ function SettingsPage() {
   }
 
   if (error) return <p className="text-destructive text-sm">{error}</p>
-  if (!settings) return <p className="text-muted-foreground">Carregando configurações…</p>
+  if (!settings) return <p className="text-muted-foreground">Loading settings…</p>
 
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
         <h1 className="text-2xl font-semibold">Settings</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Reinicie o app para aplicar alterações de caminhos.
+          Restart the app to apply path changes.
         </p>
       </div>
 
       <PathList
-        label="Skills Globais"
-        description="Pastas varridas recursivamente para descobrir skills disponíveis para todos os projetos. Qualquer subpasta com SKILL.md é reconhecida como uma skill."
+        label="Global Skills"
+        description="Folders scanned recursively to discover skills available to all projects. Any subfolder containing a SKILL.md is recognized as a skill."
         paths={settings.globalSkillSources}
         onChange={(v) => setSettings({ ...settings, globalSkillSources: v })}
       />
 
       <PathList
         label="Workspace Roots"
-        description="Raízes do ambiente de desenvolvimento. O app escaneia essas pastas para descobrir projetos (detecta repositórios .git)."
+        description="Root folders of your development workspace. The app scans these directories to discover projects (detects .git repositories)."
         paths={settings.workspaceRoots}
         onChange={(v) => setSettings({ ...settings, workspaceRoots: v })}
       />
@@ -163,9 +163,9 @@ function SettingsPage() {
       <div className="flex items-center gap-3">
         <Button onClick={handleSave} disabled={saving}>
           <Save className="h-4 w-4 mr-2" />
-          {saving ? 'Salvando…' : 'Salvar'}
+          {saving ? 'Saving…' : 'Save'}
         </Button>
-        {saved && <span className="text-sm text-green-600">Salvo!</span>}
+        {saved && <span className="text-sm text-green-600">Saved</span>}
       </div>
     </div>
   )

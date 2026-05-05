@@ -20,6 +20,12 @@ import type {
   DoctorIssue,
   CopySkillRequest,
   DeleteSkillRequest,
+  Category,
+  ProjectCategoryLink,
+  CreateCategoryRequest,
+  UpdateCategoryRequest,
+  AssignSkillCategoryRequest,
+  ProjectCategoryRequest,
 } from '@/types'
 
 export const keys = {
@@ -30,6 +36,8 @@ export const keys = {
   activations: (filter?: ActivationFilter) =>
     filter ? ['activations', filter] : (['activations'] as const),
   doctor: ['doctor'] as const,
+  categories: ['categories'] as const,
+  projectCategories: (projectId: string) => ['project-categories', projectId] as const,
 }
 
 // --- Skills ---
@@ -58,6 +66,7 @@ export function useDeleteSkill() {
   return useMutation<void, Error, DeleteSkillRequest>({
     mutationFn: api.deleteSkill,
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.skills })
       qc.invalidateQueries({ queryKey: keys.allSkills })
       qc.invalidateQueries({ queryKey: ['skills', 'project'] })
       qc.invalidateQueries({ queryKey: keys.activations() })
@@ -109,7 +118,21 @@ export function useDeleteProject() {
     mutationFn: api.deleteProject,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.projects })
+      qc.invalidateQueries({ queryKey: ['skills', 'project'] })
       qc.invalidateQueries({ queryKey: keys.activations() })
+    },
+  })
+}
+
+export function useResetProjectSkills() {
+  const qc = useQueryClient()
+  return useMutation<void, Error, string>({
+    mutationFn: api.resetProjectSkills,
+    onSuccess: (_, projectId) => {
+      qc.invalidateQueries({ queryKey: keys.projectSkills(projectId) })
+      qc.invalidateQueries({ queryKey: keys.allSkills })
+      qc.invalidateQueries({ queryKey: keys.activations() })
+      qc.invalidateQueries({ queryKey: keys.projectCategories(projectId) })
     },
   })
 }
@@ -170,5 +193,78 @@ export function useFixIssue() {
   return useMutation<void, Error, DoctorIssue>({
     mutationFn: api.fixIssue,
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.doctor }),
+  })
+}
+
+// --- Categories ---
+
+export function useCategories(): UseQueryResult<Category[]> {
+  return useQuery({ queryKey: keys.categories, queryFn: api.listCategories })
+}
+
+export function useCreateCategory() {
+  const qc = useQueryClient()
+  return useMutation<Category, Error, CreateCategoryRequest>({
+    mutationFn: api.createCategory,
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.categories }),
+  })
+}
+
+export function useUpdateCategory() {
+  const qc = useQueryClient()
+  return useMutation<void, Error, UpdateCategoryRequest>({
+    mutationFn: api.updateCategory,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.categories })
+      qc.invalidateQueries({ queryKey: keys.allSkills })
+    },
+  })
+}
+
+export function useDeleteCategory() {
+  const qc = useQueryClient()
+  return useMutation<void, Error, number>({
+    mutationFn: api.deleteCategory,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.categories })
+      qc.invalidateQueries({ queryKey: keys.allSkills })
+    },
+  })
+}
+
+export function useAssignSkillCategory() {
+  const qc = useQueryClient()
+  return useMutation<void, Error, AssignSkillCategoryRequest>({
+    mutationFn: api.assignSkillCategory,
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.allSkills }),
+  })
+}
+
+export function useProjectCategories(projectId: string): UseQueryResult<ProjectCategoryLink[]> {
+  return useQuery({
+    queryKey: keys.projectCategories(projectId),
+    queryFn: () => api.listProjectCategories(projectId),
+    enabled: !!projectId,
+  })
+}
+
+export function useAssociateProjectCategory() {
+  const qc = useQueryClient()
+  return useMutation<void, Error, ProjectCategoryRequest>({
+    mutationFn: api.associateProjectCategory,
+    onSuccess: (_, req) => {
+      qc.invalidateQueries({ queryKey: keys.projectCategories(req.projectId) })
+      qc.invalidateQueries({ queryKey: keys.projectSkills(req.projectId) })
+      qc.invalidateQueries({ queryKey: keys.allSkills })
+    },
+  })
+}
+
+export function useDisassociateProjectCategory() {
+  const qc = useQueryClient()
+  return useMutation<void, Error, ProjectCategoryRequest>({
+    mutationFn: api.disassociateProjectCategory,
+    onSuccess: (_, req) =>
+      qc.invalidateQueries({ queryKey: keys.projectCategories(req.projectId) }),
   })
 }

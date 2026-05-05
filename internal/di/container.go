@@ -23,6 +23,7 @@ type Container struct {
 	Projects    *binding.ProjectsBinding
 	Activations *binding.ActivationBinding
 	Doctor      *binding.DoctorBinding
+	Categories  *binding.CategoriesBinding
 
 	RefreshCache *usecase.RefreshSkillCache
 }
@@ -41,6 +42,7 @@ func Wire(globalSkillSources []string, dbPath string) (*Container, error) {
 	activationRepo := persistence.NewActivationRepository(db)
 	projectScanner := filesystem.NewProjectScanner(afero.NewOsFs())
 	skillCacheRepo := persistence.NewSkillCacheRepository(db, projectRepo)
+	categoryRepo := persistence.NewCategoryRepository(db)
 
 	// Agent adapters
 	homeDir, err := os.UserHomeDir()
@@ -67,16 +69,22 @@ func Wire(globalSkillSources []string, dbPath string) (*Container, error) {
 	activateSkill := usecase.NewActivateSkill(skillRepo, projectSkillRepo, projectRepo, activationRepo, adapters)
 	deactivateSkill := usecase.NewDeactivateSkill(skillRepo, projectSkillRepo, projectRepo, activationRepo, adapters)
 	resolveConflict := usecase.NewResolveConflict(projectRepo, skillRepo, projectSkillRepo, activationRepo, adapters)
+	resetProjectSkills := usecase.NewResetProjectSkills(projectRepo, activationRepo)
 	doctor := usecase.NewDoctor(skillRepo, projectRepo, activationRepo, homeDir)
 	fixIssue := usecase.NewFixIssue(activationRepo, projectRepo)
+	manageCategories := usecase.NewManageCategories(categoryRepo)
+	assignSkillCategory := usecase.NewAssignSkillCategory(categoryRepo, projectRepo)
+	associateProjectCategory := usecase.NewAssociateProjectCategory(categoryRepo, projectRepo)
+	disassociateProjectCategory := usecase.NewDisassociateProjectCategory(categoryRepo)
 
 	return &Container{
 		DB:           db,
 		RefreshCache: refreshCache,
-		Skills:       binding.NewSkillsBinding(listSkills, listProjectSkills, listAllSkills, copySkill, deleteSkill),
+		Skills:       binding.NewSkillsBinding(listSkills, listProjectSkills, listAllSkills, copySkill, deleteSkill, resetProjectSkills),
 		Projects:     binding.NewProjectsBinding(listProjects, registerProject, scanProjects, deleteProject),
 		Activations:  binding.NewActivationBinding(activateSkill, deactivateSkill, resolveConflict, activationRepo),
 		Doctor:       binding.NewDoctorBinding(doctor, fixIssue),
+		Categories:   binding.NewCategoriesBinding(manageCategories, assignSkillCategory, associateProjectCategory, disassociateProjectCategory, categoryRepo),
 	}, nil
 }
 

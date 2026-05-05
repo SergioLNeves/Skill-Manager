@@ -519,6 +519,51 @@ func (_c *MockActivationRepository_Delete_Call) RunAndReturn(run func(ctx contex
 	return _c
 }
 
+// DeleteByProjectID provides a mock function for the type MockActivationRepository
+func (_mock *MockActivationRepository) DeleteByProjectID(ctx context.Context, projectID string) error {
+	ret := _mock.Called(ctx, projectID)
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteByProjectID")
+	}
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, projectID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockActivationRepository_DeleteByProjectID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteByProjectID'
+type MockActivationRepository_DeleteByProjectID_Call struct {
+	*mock.Call
+}
+
+func (_e *MockActivationRepository_Expecter) DeleteByProjectID(ctx interface{}, projectID interface{}) *MockActivationRepository_DeleteByProjectID_Call {
+	return &MockActivationRepository_DeleteByProjectID_Call{Call: _e.mock.On("DeleteByProjectID", ctx, projectID)}
+}
+
+func (_c *MockActivationRepository_DeleteByProjectID_Call) Run(run func(ctx context.Context, projectID string)) *MockActivationRepository_DeleteByProjectID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(arg0, args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockActivationRepository_DeleteByProjectID_Call) Return(err error) *MockActivationRepository_DeleteByProjectID_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockActivationRepository_DeleteByProjectID_Call) RunAndReturn(run func(ctx context.Context, projectID string) error) *MockActivationRepository_DeleteByProjectID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FindConflict provides a mock function for the type MockActivationRepository
 func (_mock *MockActivationRepository) FindConflict(ctx context.Context, skillID string, agent domain.Agent, projectID string) (*domain.Conflict, error) {
 	ret := _mock.Called(ctx, skillID, agent, projectID)

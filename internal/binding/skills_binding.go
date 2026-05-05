@@ -11,12 +11,13 @@ import (
 
 // SkillsBinding exposes skill-related operations to the Wails frontend.
 type SkillsBinding struct {
-	list        *usecase.ListSkills
-	listProject *usecase.ListProjectSkills
-	listAll     *usecase.ListAllSkills
-	copySkill   *usecase.CopySkill
-	deleteSkill *usecase.DeleteSkill
-	trashDir    string
+	list               *usecase.ListSkills
+	listProject        *usecase.ListProjectSkills
+	listAll            *usecase.ListAllSkills
+	copySkill          *usecase.CopySkill
+	deleteSkill        *usecase.DeleteSkill
+	resetProjectSkills *usecase.ResetProjectSkills
+	trashDir           string
 }
 
 func NewSkillsBinding(
@@ -25,15 +26,17 @@ func NewSkillsBinding(
 	listAll *usecase.ListAllSkills,
 	copySkill *usecase.CopySkill,
 	deleteSkill *usecase.DeleteSkill,
+	resetProjectSkills *usecase.ResetProjectSkills,
 ) *SkillsBinding {
 	home, _ := os.UserHomeDir()
 	return &SkillsBinding{
-		list:        list,
-		listProject: listProject,
-		listAll:     listAll,
-		copySkill:   copySkill,
-		deleteSkill: deleteSkill,
-		trashDir:    filepath.Join(home, ".skills-manager", "trash"),
+		list:               list,
+		listProject:        listProject,
+		listAll:            listAll,
+		copySkill:          copySkill,
+		deleteSkill:        deleteSkill,
+		resetProjectSkills: resetProjectSkills,
+		trashDir:           filepath.Join(home, ".skills-manager", "trash"),
 	}
 }
 
@@ -93,4 +96,9 @@ func (b *SkillsBinding) DeleteSkill(ctx context.Context, req DeleteSkillRequestD
 		ProjectID: req.ProjectID,
 		TrashDir:  b.trashDir,
 	})
+}
+
+// ResetProjectSkills removes all copied skills and activations from a project.
+func (b *SkillsBinding) ResetProjectSkills(ctx context.Context, projectID string) error {
+	return b.resetProjectSkills.Execute(ctx, projectID)
 }

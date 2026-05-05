@@ -6,6 +6,14 @@ export function Activate(arg1) {
   return window['go']['main']['App']['Activate'](arg1);
 }
 
+export function AssignSkillCategory(arg1) {
+  return window['go']['main']['App']['AssignSkillCategory'](arg1);
+}
+
+export function AssociateProjectCategory(arg1) {
+  return window['go']['main']['App']['AssociateProjectCategory'](arg1);
+}
+
 export function ConfirmCandidate(arg1) {
   return window['go']['main']['App']['ConfirmCandidate'](arg1);
 }
@@ -14,8 +22,16 @@ export function CopySkill(arg1) {
   return window['go']['main']['App']['CopySkill'](arg1);
 }
 
+export function CreateCategory(arg1) {
+  return window['go']['main']['App']['CreateCategory'](arg1);
+}
+
 export function Deactivate(arg1) {
   return window['go']['main']['App']['Deactivate'](arg1);
+}
+
+export function DeleteCategory(arg1) {
+  return window['go']['main']['App']['DeleteCategory'](arg1);
 }
 
 export function DeleteProject(arg1) {
@@ -24,6 +40,10 @@ export function DeleteProject(arg1) {
 
 export function DeleteSkill(arg1) {
   return window['go']['main']['App']['DeleteSkill'](arg1);
+}
+
+export function DisassociateProjectCategory(arg1) {
+  return window['go']['main']['App']['DisassociateProjectCategory'](arg1);
 }
 
 export function FixIssue(arg1) {
@@ -40,6 +60,14 @@ export function ListActivations(arg1) {
 
 export function ListAllSkills() {
   return window['go']['main']['App']['ListAllSkills']();
+}
+
+export function ListCategories() {
+  return window['go']['main']['App']['ListCategories']();
+}
+
+export function ListProjectCategories(arg1) {
+  return window['go']['main']['App']['ListProjectCategories'](arg1);
 }
 
 export function ListProjectSkills(arg1) {
@@ -62,6 +90,10 @@ export function RegisterProject(arg1) {
   return window['go']['main']['App']['RegisterProject'](arg1);
 }
 
+export function ResetProjectSkills(arg1) {
+  return window['go']['main']['App']['ResetProjectSkills'](arg1);
+}
+
 export function ResolveConflict(arg1) {
   return window['go']['main']['App']['ResolveConflict'](arg1);
 }
@@ -80,4 +112,8 @@ export function ScanCandidates(arg1) {
 
 export function SelectDirectory() {
   return window['go']['main']['App']['SelectDirectory']();
+}
+
+export function UpdateCategory(arg1) {
+  return window['go']['main']['App']['UpdateCategory'](arg1);
 }

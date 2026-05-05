@@ -23,26 +23,32 @@ function SkillsPage() {
     return (
       s.name.toLowerCase().includes(q) ||
       s.description.toLowerCase().includes(q) ||
+      (s.categoryName ?? '').toLowerCase().includes(q) ||
       s.projects.some((p) => p.name.toLowerCase().includes(q))
     )
   })
 
-  if (isLoading) return <p className="text-muted-foreground">Carregando skills…</p>
+  if (isLoading) return <p className="text-muted-foreground">Loading skills…</p>
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-semibold">Skills</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {skills.length} skill{skills.length !== 1 ? 's' : ''} encontrada{skills.length !== 1 ? 's' : ''}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Skills</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {skills.length} skill{skills.length !== 1 ? 's' : ''} found
+          </p>
+        </div>
+        <Link to="/categories" className="text-sm text-muted-foreground hover:text-foreground underline">
+          Manage categories →
+        </Link>
       </div>
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <input
           type="text"
-          placeholder="Buscar por nome, descrição ou projeto…"
+          placeholder="Search by name, description, category, or project…"
           className="w-full rounded-md border border-input bg-background pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -51,10 +57,10 @@ function SkillsPage() {
 
       {!filtered.length ? (
         <div className="text-center mt-16 text-muted-foreground">
-          <p className="text-sm">Nenhuma skill encontrada.</p>
+          <p className="text-sm">No skills found.</p>
           {skills.length === 0 && (
             <p className="text-xs mt-1">
-              Adicione projetos em <strong>Projects</strong> para ver as skills aqui.
+              Add projects in <strong>Projects</strong> to see skills here.
             </p>
           )}
         </div>
@@ -106,7 +112,7 @@ function SkillCard({
               variant="ghost"
               size="icon"
               className="h-7 w-7"
-              title="Copiar para projeto"
+              title="Copy to project"
               onClick={onCopy}
             >
               <Copy className="h-3.5 w-3.5" />
@@ -115,7 +121,7 @@ function SkillCard({
               variant="ghost"
               size="icon"
               className="h-7 w-7 hover:text-destructive"
-              title="Excluir"
+              title="Delete"
               onClick={onDelete}
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -141,16 +147,19 @@ function SkillCard({
             </div>
           ))}
           {overflow > 0 && (
-            <p className="text-xs text-muted-foreground pl-[18px]">+{overflow} mais</p>
+            <p className="text-xs text-muted-foreground pl-[18px]">+{overflow} more</p>
           )}
         </div>
 
         <div className="flex items-center gap-1.5 flex-wrap">
+          {skill.categoryName && (
+            <Badge variant="outline" className="text-[10px] py-0 h-4">{skill.categoryName}</Badge>
+          )}
           {skill.isGlobal && (
             <Badge variant="outline" className="text-[10px] py-0 h-4">global</Badge>
           )}
           <Badge variant="secondary" className="text-[10px] py-0 h-4">
-            {totalLocations} {totalLocations === 1 ? 'local' : 'locais'}
+            {totalLocations} {totalLocations === 1 ? 'location' : 'locations'}
           </Badge>
         </div>
       </div>
@@ -197,14 +206,14 @@ function CopyModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <Card className="w-full max-w-md mx-4">
         <CardHeader>
-          <CardTitle className="text-base">Copiar skill para projetos</CardTitle>
+          <CardTitle className="text-base">Copy skill to projects</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Copia <strong>{skill.name}</strong> em <code>{destFolder}/</code> de cada projeto selecionado.
+            Copies <strong>{skill.name}</strong> into <code>{destFolder}/</code> of each selected project.
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">Destino (agente)</p>
+            <p className="text-xs font-medium text-muted-foreground">Target agent</p>
             <div className="flex gap-2">
               {(['claude', 'copilot'] as const).map((a) => (
                 <button
@@ -219,7 +228,7 @@ function CopyModal({
           </div>
 
           {eligible.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum outro projeto registrado.</p>
+            <p className="text-sm text-muted-foreground">No other registered projects.</p>
           ) : (
             <div className="space-y-2 max-h-56 overflow-y-auto">
               {eligible.map((p) => {
@@ -245,7 +254,7 @@ function CopyModal({
                     <div className="flex-1">
                       <p className="text-sm font-medium">{p.name}</p>
                       {err && <p className="text-xs text-destructive">{err}</p>}
-                      {isDone && <p className="text-xs text-green-600">Copiado!</p>}
+                      {isDone && <p className="text-xs text-green-600">Copied</p>}
                     </div>
                   </label>
                 )
@@ -253,13 +262,13 @@ function CopyModal({
             </div>
           )}
           <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={onClose}>Fechar</Button>
+            <Button variant="outline" onClick={onClose}>Close</Button>
             {eligible.length > 0 && (
               <Button
                 disabled={selected.length === 0 || copySkill.isPending}
                 onClick={handleCopy}
               >
-                {copySkill.isPending ? 'Copiando…' : `Copiar para ${selected.length} projeto${selected.length !== 1 ? 's' : ''}`}
+                {copySkill.isPending ? 'Copying…' : `Copy to ${selected.length} project${selected.length !== 1 ? 's' : ''}`}
               </Button>
             )}
           </div>
@@ -304,18 +313,18 @@ function DeleteModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <Card className="w-full max-w-sm mx-4">
         <CardHeader>
-          <CardTitle className="text-base text-destructive">Excluir skill</CardTitle>
+          <CardTitle className="text-base text-destructive">Delete skill</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Selecione de quais locais excluir <strong>{skill.name}</strong>.
+            Select the locations to delete <strong>{skill.name}</strong> from.
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
           {allDone ? (
             <div className="space-y-3">
               <p className="text-sm text-green-600">
-                Excluído. Backup salvo em <code>~/.skills-manager/trash/</code>.
+                Deleted. Backup saved at <code>~/.skills-manager/trash/</code>.
               </p>
-              <Button onClick={onClose} className="w-full">Fechar</Button>
+              <Button onClick={onClose} className="w-full">Close</Button>
             </div>
           ) : (
             <>
@@ -343,14 +352,14 @@ function DeleteModal({
                       <div className="flex-1">
                         <p className="text-sm font-medium">{loc.label}</p>
                         {err && <p className="text-xs text-destructive">{err}</p>}
-                        {isDone && <p className="text-xs text-green-600">Excluído!</p>}
+                        {isDone && <p className="text-xs text-green-600">Deleted</p>}
                       </div>
                     </label>
                   )
                 })}
               </div>
               <p className="text-xs text-muted-foreground">
-                Backup salvo em <code>~/.skills-manager/trash/</code> antes de excluir.
+                Backup saved at <code>~/.skills-manager/trash/</code> before deletion.
               </p>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -358,16 +367,16 @@ function DeleteModal({
                   checked={confirmed}
                   onChange={(e) => setConfirmed(e.target.checked)}
                 />
-                <span className="text-sm">Entendo que esta ação é irreversível no projeto</span>
+                <span className="text-sm">I understand this action is irreversible.</span>
               </label>
               <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={onClose}>Cancelar</Button>
+                <Button variant="outline" onClick={onClose}>Cancel</Button>
                 <Button
                   variant="destructive"
                   disabled={!confirmed || selectedLocations.length === 0 || deleteSkill.isPending}
                   onClick={handleDelete}
                 >
-                  {deleteSkill.isPending ? 'Excluindo…' : `Excluir ${selectedLocations.length} local${selectedLocations.length !== 1 ? 'is' : ''}`}
+                  {deleteSkill.isPending ? 'Deleting…' : `Delete ${selectedLocations.length} location${selectedLocations.length !== 1 ? 's' : ''}`}
                 </Button>
               </div>
             </>

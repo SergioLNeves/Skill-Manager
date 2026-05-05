@@ -15,3 +15,4 @@ frontend/package.json.md5
 
 # Wails generated runtime (regenerado por `wails generate module` / `wails dev`)
 frontend/wailsjs/runtime/
+DATABASE.md

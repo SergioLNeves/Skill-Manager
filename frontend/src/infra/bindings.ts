@@ -19,6 +19,12 @@ import type {
   DoctorIssue,
   CopySkillRequest,
   DeleteSkillRequest,
+  Category,
+  ProjectCategoryLink,
+  CreateCategoryRequest,
+  UpdateCategoryRequest,
+  AssignSkillCategoryRequest,
+  ProjectCategoryRequest,
 } from '@/types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -37,26 +43,32 @@ export const api = {
   listProjectSkills: (projectId: string) => call<Skill[]>('ListProjectSkills', projectId),
   copySkill: (req: CopySkillRequest) => call<void>('CopySkill', req),
   deleteSkill: (req: DeleteSkillRequest) => call<void>('DeleteSkill', req),
+  resetProjectSkills: (projectId: string) => call<void>('ResetProjectSkills', projectId),
 
   // Projects
   listProjects: () => call<Project[]>('ListProjects'),
-  registerProject: (req: RegisterProjectRequest) =>
-    call<Project>('RegisterProject', req),
-  scanCandidates: (roots: string[]) =>
-    call<ProjectCandidate[]>('ScanCandidates', roots),
-  confirmCandidate: (candidate: ProjectCandidate) =>
-    call<Project>('ConfirmCandidate', candidate),
+  registerProject: (req: RegisterProjectRequest) => call<Project>('RegisterProject', req),
+  scanCandidates: (roots: string[]) => call<ProjectCandidate[]>('ScanCandidates', roots),
+  confirmCandidate: (candidate: ProjectCandidate) => call<Project>('ConfirmCandidate', candidate),
   deleteProject: (id: string) => call<void>('DeleteProject', id),
 
   // Activations
-  listActivations: (filter: ActivationFilter) =>
-    call<Activation[]>('ListActivations', filter),
+  listActivations: (filter: ActivationFilter) => call<Activation[]>('ListActivations', filter),
   activate: (req: ActivateRequest) => call<ActivateResult>('Activate', req),
   deactivate: (id: number) => call<void>('Deactivate', id),
-  resolveConflict: (req: ResolveConflictRequest) =>
-    call<void>('ResolveConflict', req),
+  resolveConflict: (req: ResolveConflictRequest) => call<void>('ResolveConflict', req),
 
   // Doctor
   runDoctor: () => call<DoctorReport>('RunDoctor'),
   fixIssue: (issue: DoctorIssue) => call<void>('FixIssue', issue),
+
+  // Categories
+  listCategories: () => call<Category[]>('ListCategories'),
+  createCategory: (req: CreateCategoryRequest) => call<Category>('CreateCategory', req),
+  updateCategory: (req: UpdateCategoryRequest) => call<void>('UpdateCategory', req),
+  deleteCategory: (id: number) => call<void>('DeleteCategory', id),
+  assignSkillCategory: (req: AssignSkillCategoryRequest) => call<void>('AssignSkillCategory', req),
+  associateProjectCategory: (req: ProjectCategoryRequest) => call<void>('AssociateProjectCategory', req),
+  disassociateProjectCategory: (req: ProjectCategoryRequest) => call<void>('DisassociateProjectCategory', req),
+  listProjectCategories: (projectId: string) => call<ProjectCategoryLink[]>('ListProjectCategories', projectId),
 }

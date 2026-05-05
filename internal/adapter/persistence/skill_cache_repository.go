@@ -63,10 +63,11 @@ func (r *SkillCacheRepository) PruneOrphanSkills(ctx context.Context) error {
 // ListAggregated returns all skills with their locations joined, satisfying usecase.SkillCacheReader.
 func (r *SkillCacheRepository) ListAggregated(ctx context.Context) ([]usecase.AggregatedSkill, error) {
 	rows, err := r.db.QueryContext(ctx, `
-		SELECT s.name, s.description, s.updated_at,
-		       l.source, l.project_id, l.path
+		SELECT s.name, s.description, s.category_id, c.name,
+		       s.updated_at, l.source, l.project_id, l.path
 		FROM skills s
 		JOIN skill_locations l ON l.skill_name = s.name
+		LEFT JOIN categories c ON c.id = s.category_id
 		ORDER BY s.name, l.source, l.project_id
 	`)
 	if err != nil {
@@ -80,8 +81,10 @@ func (r *SkillCacheRepository) ListAggregated(ctx context.Context) ([]usecase.Ag
 	for rows.Next() {
 		var name, description, source, projectID, path string
 		var updatedAt time.Time
+		var categoryID sql.NullInt64
+		var categoryName sql.NullString
 
-		if err := rows.Scan(&name, &description, &updatedAt, &source, &projectID, &path); err != nil {
+		if err := rows.Scan(&name, &description, &categoryID, &categoryName, &updatedAt, &source, &projectID, &path); err != nil {
 			return nil, err
 		}
 
@@ -91,6 +94,13 @@ func (r *SkillCacheRepository) ListAggregated(ctx context.Context) ([]usecase.Ag
 				Name:        name,
 				Description: description,
 				UpdatedAt:   updatedAt,
+			}
+			if categoryID.Valid {
+				id := categoryID.Int64
+				agg.CategoryID = &id
+			}
+			if categoryName.Valid {
+				agg.CategoryName = categoryName.String
 			}
 			byName[name] = agg
 			order = append(order, name)
@@ -111,7 +121,7 @@ func (r *SkillCacheRepository) ListAggregated(ctx context.Context) ([]usecase.Ag
 				ID:        projectID,
 				Name:      pName,
 				Path:      pPath,
-				SkillPath: path, // path from skill_locations = skill directory
+				SkillPath: path,
 			})
 		}
 	}

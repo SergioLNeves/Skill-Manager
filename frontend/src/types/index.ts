@@ -2,6 +2,8 @@ export interface Skill {
   id: string
   name: string
   description: string
+  categoryId: number | null
+  categoryName: string
   path: string
   source: 'global' | 'project'
   ownerProjectId: string
@@ -19,10 +21,49 @@ export interface SkillProjectRef {
 export interface AggregatedSkill {
   name: string
   description: string
+  categoryId: number | null
+  categoryName: string
   isGlobal: boolean
   globalPath: string
   projects: SkillProjectRef[]
   updatedAt: string
+}
+
+export interface Category {
+  id: number
+  name: string
+  description: string
+  createdAt: string
+}
+
+export interface ProjectCategoryLink {
+  projectId: string
+  categoryId: number
+  agent: string
+  category: Category
+}
+
+export interface CreateCategoryRequest {
+  name: string
+  description: string
+}
+
+export interface UpdateCategoryRequest {
+  id: number
+  name: string
+  description: string
+}
+
+export interface AssignSkillCategoryRequest {
+  skillName: string
+  skillPath: string
+  categoryId: number | null
+}
+
+export interface ProjectCategoryRequest {
+  projectId: string
+  categoryId: number
+  agent: string
 }
 
 export interface CopySkillRequest {

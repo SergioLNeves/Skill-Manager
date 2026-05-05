@@ -5,15 +5,25 @@ import {config} from '../models';
 
 export function Activate(arg1:binding.ActivateRequestDTO):Promise<binding.ActivateResultDTO>;
 
+export function AssignSkillCategory(arg1:binding.AssignSkillCategoryRequestDTO):Promise<void>;
+
+export function AssociateProjectCategory(arg1:binding.ProjectCategoryRequestDTO):Promise<void>;
+
 export function ConfirmCandidate(arg1:binding.ProjectCandidateDTO):Promise<binding.ProjectDTO>;
 
 export function CopySkill(arg1:binding.CopySkillRequestDTO):Promise<void>;
 
+export function CreateCategory(arg1:binding.CreateCategoryRequestDTO):Promise<binding.CategoryDTO>;
+
 export function Deactivate(arg1:number):Promise<void>;
+
+export function DeleteCategory(arg1:number):Promise<void>;
 
 export function DeleteProject(arg1:string):Promise<void>;
 
 export function DeleteSkill(arg1:binding.DeleteSkillRequestDTO):Promise<void>;
+
+export function DisassociateProjectCategory(arg1:binding.ProjectCategoryRequestDTO):Promise<void>;
 
 export function FixIssue(arg1:binding.DoctorIssueDTO):Promise<void>;
 
@@ -22,6 +32,10 @@ export function GetSettings():Promise<config.Settings>;
 export function ListActivations(arg1:binding.ActivationFilterDTO):Promise<Array<binding.ActivationDTO>>;
 
 export function ListAllSkills():Promise<Array<binding.AggregatedSkillDTO>>;
+
+export function ListCategories():Promise<Array<binding.CategoryDTO>>;
+
+export function ListProjectCategories(arg1:string):Promise<Array<binding.ProjectCategoryLinkDTO>>;
 
 export function ListProjectSkills(arg1:string):Promise<Array<binding.SkillDTO>>;
 
@@ -33,6 +47,8 @@ export function ReadSkillContent(arg1:string):Promise<string>;
 
 export function RegisterProject(arg1:binding.RegisterProjectRequestDTO):Promise<binding.ProjectDTO>;
 
+export function ResetProjectSkills(arg1:string):Promise<void>;
+
 export function ResolveConflict(arg1:binding.ResolveConflictRequestDTO):Promise<void>;
 
 export function RunDoctor():Promise<binding.DoctorReportDTO>;
@@ -42,3 +58,5 @@ export function SaveSettings(arg1:config.Settings):Promise<void>;
 export function ScanCandidates(arg1:Array<string>):Promise<Array<binding.ProjectCandidateDTO>>;
 
 export function SelectDirectory():Promise<string>;
+
+export function UpdateCategory(arg1:binding.UpdateCategoryRequestDTO):Promise<void>;

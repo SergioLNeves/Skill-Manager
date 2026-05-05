@@ -190,6 +190,13 @@ func (a *App) DeleteSkill(req binding.DeleteSkillRequestDTO) error {
 	return a.container.Skills.DeleteSkill(a.ctx, req)
 }
 
+func (a *App) ResetProjectSkills(projectID string) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
+	return a.container.Skills.ResetProjectSkills(a.ctx, projectID)
+}
+
 // --- Projects ---
 
 func (a *App) ListProjects() ([]binding.ProjectDTO, error) {
@@ -255,6 +262,64 @@ func (a *App) ResolveConflict(req binding.ResolveConflictRequestDTO) error {
 		return err
 	}
 	return a.container.Activations.ResolveConflict(a.ctx, req)
+}
+
+// --- Categories ---
+
+func (a *App) ListCategories() ([]binding.CategoryDTO, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
+	return a.container.Categories.ListCategories(a.ctx)
+}
+
+func (a *App) CreateCategory(req binding.CreateCategoryRequestDTO) (binding.CategoryDTO, error) {
+	if err := a.ready(); err != nil {
+		return binding.CategoryDTO{}, err
+	}
+	return a.container.Categories.CreateCategory(a.ctx, req)
+}
+
+func (a *App) UpdateCategory(req binding.UpdateCategoryRequestDTO) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
+	return a.container.Categories.UpdateCategory(a.ctx, req)
+}
+
+func (a *App) DeleteCategory(id int64) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
+	return a.container.Categories.DeleteCategory(a.ctx, id)
+}
+
+func (a *App) AssignSkillCategory(req binding.AssignSkillCategoryRequestDTO) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
+	return a.container.Categories.AssignSkillCategory(a.ctx, req)
+}
+
+func (a *App) AssociateProjectCategory(req binding.ProjectCategoryRequestDTO) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
+	return a.container.Categories.AssociateProjectCategory(a.ctx, req)
+}
+
+func (a *App) DisassociateProjectCategory(req binding.ProjectCategoryRequestDTO) error {
+	if err := a.ready(); err != nil {
+		return err
+	}
+	return a.container.Categories.DisassociateProjectCategory(a.ctx, req)
+}
+
+func (a *App) ListProjectCategories(projectID string) ([]binding.ProjectCategoryLinkDTO, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
+	return a.container.Categories.ListProjectCategories(a.ctx, projectID)
 }
 
 // --- Doctor ---

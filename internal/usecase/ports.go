@@ -39,6 +39,7 @@ type ActivationRepository interface {
 	List(ctx context.Context, filter ActivationFilter) ([]domain.Activation, error)
 	Save(ctx context.Context, a domain.Activation) (domain.Activation, error)
 	Delete(ctx context.Context, id int64) error
+	DeleteByProjectID(ctx context.Context, projectID string) error
 	FindConflict(ctx context.Context, skillID string, agent domain.Agent, projectID string) (*domain.Conflict, error)
 }
 
@@ -75,4 +76,20 @@ type DoctorIssue struct {
 // DoctorReport is the result of a health check run.
 type DoctorReport struct {
 	Issues []DoctorIssue
+}
+
+// CategoryRepository manages user-defined categories and project-category links.
+type CategoryRepository interface {
+	Create(ctx context.Context, name, description string) (domain.Category, error)
+	Update(ctx context.Context, id int64, name, description string) error
+	Delete(ctx context.Context, id int64) error
+	List(ctx context.Context) ([]domain.Category, error)
+	GetByID(ctx context.Context, id int64) (domain.Category, error)
+	AssignSkill(ctx context.Context, skillName string, categoryID *int64) error
+	ListSkillsInCategory(ctx context.Context, categoryID int64) ([]string, error)
+	LinkProject(ctx context.Context, projectID string, categoryID int64, agent string) error
+	UnlinkProject(ctx context.Context, projectID string, categoryID int64, agent string) error
+	ListProjectCategories(ctx context.Context, projectID string) ([]domain.ProjectCategoryLink, error)
+	GetCategoryLinks(ctx context.Context, categoryID int64) ([]domain.ProjectCategoryLink, error)
+	ListCategorySkillPaths(ctx context.Context, categoryID int64) ([]CategorySkillPath, error)
 }

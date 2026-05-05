@@ -7,11 +7,58 @@ import (
 	"skill-manager/internal/usecase"
 )
 
+// --- Category DTOs ---
+
+// CategoryDTO is the frontend representation of a category.
+type CategoryDTO struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	CreatedAt   string `json:"createdAt"`
+}
+
+// CreateCategoryRequestDTO carries a category creation request from the frontend.
+type CreateCategoryRequestDTO struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+// UpdateCategoryRequestDTO carries a category update request from the frontend.
+type UpdateCategoryRequestDTO struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+// AssignSkillCategoryRequestDTO sets or clears the category of a skill.
+type AssignSkillCategoryRequestDTO struct {
+	SkillName  string  `json:"skillName"`
+	SkillPath  string  `json:"skillPath"`
+	CategoryID *int64  `json:"categoryId"`
+}
+
+// ProjectCategoryRequestDTO carries a project-category-agent association request.
+type ProjectCategoryRequestDTO struct {
+	ProjectID  string `json:"projectId"`
+	CategoryID int64  `json:"categoryId"`
+	Agent      string `json:"agent"`
+}
+
+// ProjectCategoryLinkDTO is the frontend representation of a project-category-agent link.
+type ProjectCategoryLinkDTO struct {
+	ProjectID  string      `json:"projectId"`
+	CategoryID int64       `json:"categoryId"`
+	Agent      string      `json:"agent"`
+	Category   CategoryDTO `json:"category"`
+}
+
 // SkillDTO is the frontend representation of a skill.
 type SkillDTO struct {
 	ID               string `json:"id"`
 	Name             string `json:"name"`
 	Description      string `json:"description"`
+	CategoryID       *int64 `json:"categoryId"`
+	CategoryName     string `json:"categoryName"`
 	Path             string `json:"path"`
 	Source           string `json:"source"`           // "global" or "project"
 	OwnerProjectID   string `json:"ownerProjectId"`   // non-empty when Source == "project"
@@ -21,12 +68,14 @@ type SkillDTO struct {
 
 // AggregatedSkillDTO is the frontend representation of a deduplicated skill with all locations.
 type AggregatedSkillDTO struct {
-	Name        string              `json:"name"`
-	Description string              `json:"description"`
-	IsGlobal    bool                `json:"isGlobal"`
-	GlobalPath  string              `json:"globalPath"`
-	Projects    []SkillProjectRef   `json:"projects"`
-	UpdatedAt   string              `json:"updatedAt"`
+	Name         string            `json:"name"`
+	Description  string            `json:"description"`
+	CategoryID   *int64            `json:"categoryId"`
+	CategoryName string            `json:"categoryName"`
+	IsGlobal     bool              `json:"isGlobal"`
+	GlobalPath   string            `json:"globalPath"`
+	Projects     []SkillProjectRef `json:"projects"`
+	UpdatedAt    string            `json:"updatedAt"`
 }
 
 // SkillProjectRef is a lightweight project reference inside an aggregated skill.
@@ -155,12 +204,32 @@ func toAggregatedSkillDTO(s usecase.AggregatedSkill) AggregatedSkillDTO {
 		refs[i] = SkillProjectRef{ID: p.ID, Name: p.Name, Path: p.Path, SkillPath: p.SkillPath}
 	}
 	return AggregatedSkillDTO{
-		Name:        s.Name,
-		Description: s.Description,
-		IsGlobal:    s.IsGlobal,
-		GlobalPath:  s.GlobalPath,
-		Projects:    refs,
-		UpdatedAt:   s.UpdatedAt.UTC().Format(time.RFC3339),
+		Name:         s.Name,
+		Description:  s.Description,
+		CategoryID:   s.CategoryID,
+		CategoryName: s.CategoryName,
+		IsGlobal:     s.IsGlobal,
+		GlobalPath:   s.GlobalPath,
+		Projects:     refs,
+		UpdatedAt:    s.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
+func toCategoryDTO(c domain.Category) CategoryDTO {
+	return CategoryDTO{
+		ID:          c.ID,
+		Name:        c.Name,
+		Description: c.Description,
+		CreatedAt:   c.CreatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
+func toProjectCategoryLinkDTO(l domain.ProjectCategoryLink) ProjectCategoryLinkDTO {
+	return ProjectCategoryLinkDTO{
+		ProjectID:  l.ProjectID,
+		CategoryID: l.CategoryID,
+		Agent:      string(l.Agent),
+		Category:   toCategoryDTO(l.Category),
 	}
 }
 

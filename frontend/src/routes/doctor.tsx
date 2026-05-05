@@ -12,10 +12,10 @@ export const Route = createFileRoute('/doctor')({
 })
 
 const KIND_META: Record<string, { label: string; severity: 'warning' | 'error' }> = {
-  orphaned_activation: { label: 'Ativação órfã', severity: 'warning' },
-  missing_project:     { label: 'Projeto ausente', severity: 'warning' },
-  broken_symlink:      { label: 'Symlink quebrado', severity: 'warning' },
-  missing_project_path:{ label: 'Diretório não encontrado', severity: 'error' },
+  orphaned_activation: { label: 'Orphaned activation', severity: 'warning' },
+  missing_project:     { label: 'Missing project', severity: 'warning' },
+  broken_symlink:      { label: 'Broken symlink', severity: 'warning' },
+  missing_project_path:{ label: 'Directory not found', severity: 'error' },
 }
 
 function DoctorPage() {
@@ -41,39 +41,39 @@ function DoctorPage() {
         <div>
           <h1 className="text-2xl font-semibold">Doctor</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Verifica a consistência entre o banco de dados e o sistema de arquivos.
+            Checks consistency between the database and the filesystem.
           </p>
         </div>
         <Button onClick={() => runDoctor.mutate()} disabled={runDoctor.isPending}>
           <ShieldCheck className="h-4 w-4 mr-2" />
-          {runDoctor.isPending ? 'Verificando…' : 'Verificar agora'}
+          {runDoctor.isPending ? 'Checking…' : 'Run check'}
         </Button>
       </div>
 
-      {/* Estado inicial */}
+      {/* Initial state */}
       {!report && !runDoctor.isPending && (
         <div className="rounded-lg border border-dashed border-border p-12 text-center text-muted-foreground">
           <ShieldCheck className="h-10 w-10 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">Clique em "Verificar agora" para diagnosticar possíveis problemas.</p>
+          <p className="text-sm">Click "Run check" to diagnose potential issues.</p>
         </div>
       )}
 
-      {/* Tudo OK */}
+      {/* All clear */}
       {report && report.issues.length === 0 && (
         <div className="rounded-lg border border-border p-10 text-center space-y-2">
           <CheckCircle2 className="h-9 w-9 mx-auto text-green-500" />
-          <p className="text-sm font-medium">Tudo certo! Nenhum problema encontrado.</p>
-          <p className="text-xs text-muted-foreground">O registro está consistente com o sistema de arquivos.</p>
+          <p className="text-sm font-medium">All clear. No issues found.</p>
+          <p className="text-xs text-muted-foreground">The registry is consistent with the filesystem.</p>
         </div>
       )}
 
-      {/* Issues encontradas */}
+      {/* Issues */}
       {report && report.issues.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">{report.issues.length}</span>{' '}
-              problema{report.issues.length !== 1 ? 's' : ''} encontrado{report.issues.length !== 1 ? 's' : ''}
+              issue{report.issues.length !== 1 ? 's' : ''} found
             </p>
             {fixableCount > 0 && (
               <Button
@@ -83,7 +83,7 @@ function DoctorPage() {
                 disabled={fixingAll}
               >
                 <Wrench className="h-3.5 w-3.5 mr-1.5" />
-                {fixingAll ? 'Corrigindo…' : `Corrigir tudo (${fixableCount})`}
+                {fixingAll ? 'Fixing…' : `Fix all (${fixableCount})`}
               </Button>
             )}
           </div>
@@ -121,7 +121,7 @@ function IssueCard({ issue }: { issue: DoctorIssue }) {
     return (
       <div className="flex items-center gap-3 rounded-lg border border-border px-4 py-3 bg-muted/30">
         <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
-        <p className="text-sm text-muted-foreground">{issue.title} — corrigido.</p>
+        <p className="text-sm text-muted-foreground">{issue.title} — fixed.</p>
       </div>
     )
   }

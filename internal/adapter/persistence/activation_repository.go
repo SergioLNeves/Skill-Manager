@@ -94,6 +94,14 @@ func (r *ActivationRepository) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
+func (r *ActivationRepository) DeleteByProjectID(ctx context.Context, projectID string) error {
+	_, err := r.db.ExecContext(ctx, `DELETE FROM activations WHERE project_id = ?`, projectID)
+	if err != nil {
+		return fmt.Errorf("activation repo: delete by project %s: %w", projectID, err)
+	}
+	return nil
+}
+
 // FindConflict returns a Conflict when the same (skillID, agent) pair has both
 // a global activation and a project-scoped activation for the given projectID.
 func (r *ActivationRepository) FindConflict(ctx context.Context, skillID string, agent domain.Agent, projectID string) (*domain.Conflict, error) {
