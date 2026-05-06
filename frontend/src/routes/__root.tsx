@@ -7,6 +7,7 @@ const queryClient = new QueryClient({
 })
 
 const navLinks = [
+  { to: '/dashboard', label: 'Dashboard' },
   { to: '/', label: 'Skills' },
   { to: '/categories', label: 'Categories' },
   { to: '/projects', label: 'Projects' },
