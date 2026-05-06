@@ -122,8 +122,13 @@ func readSkill(fs afero.Fs, dir string) (domain.Skill, error) {
 	}, nil
 }
 
-// stableID returns a deterministic ID from the skill's absolute path.
+// stableID returns a deterministic ID from the skill's canonical path.
+// Canonicalizing via EvalSymlinks ensures the same skill reached through
+// different symlinks (e.g. .claude/skills/foo → skills/foo) maps to one ID.
 func stableID(path string) string {
+	if canonical, err := filepath.EvalSymlinks(path); err == nil {
+		path = canonical
+	}
 	sum := sha256.Sum256([]byte(path))
 	return fmt.Sprintf("%x", sum[:8])
 }

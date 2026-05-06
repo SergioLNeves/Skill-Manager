@@ -201,7 +201,7 @@ func (r *CategoryRepository) GetCategoryLinks(ctx context.Context, categoryID in
 func (r *CategoryRepository) ListCategorySkillPaths(ctx context.Context, categoryID int64) ([]usecase.CategorySkillPath, error) {
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT s.name, COALESCE(
-			(SELECT l.path FROM skill_locations l WHERE l.skill_name = s.name AND l.source = 'global' LIMIT 1),
+			(SELECT l.path FROM skill_locations l WHERE l.skill_name = s.name AND l.source = 'github' LIMIT 1),
 			(SELECT l.path FROM skill_locations l WHERE l.skill_name = s.name LIMIT 1)
 		)
 		FROM skills s

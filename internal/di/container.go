@@ -73,15 +73,15 @@ func Wire(globalSkillSources []string, dbPath string) (*Container, error) {
 	doctor := usecase.NewDoctor(skillRepo, projectRepo, activationRepo, homeDir)
 	fixIssue := usecase.NewFixIssue(activationRepo, projectRepo)
 	manageCategories := usecase.NewManageCategories(categoryRepo)
-	assignSkillCategory := usecase.NewAssignSkillCategory(categoryRepo, projectRepo)
-	associateProjectCategory := usecase.NewAssociateProjectCategory(categoryRepo, projectRepo)
+	assignSkillCategory := usecase.NewAssignSkillCategory(categoryRepo, projectRepo, activationRepo, skillRepo, projectSkillRepo, adapters)
+	associateProjectCategory := usecase.NewAssociateProjectCategory(categoryRepo, projectRepo, activationRepo, skillRepo, projectSkillRepo, adapters)
 	disassociateProjectCategory := usecase.NewDisassociateProjectCategory(categoryRepo)
 
 	return &Container{
 		DB:           db,
 		RefreshCache: refreshCache,
 		Skills:       binding.NewSkillsBinding(listSkills, listProjectSkills, listAllSkills, copySkill, deleteSkill, resetProjectSkills),
-		Projects:     binding.NewProjectsBinding(listProjects, registerProject, scanProjects, deleteProject),
+		Projects:     binding.NewProjectsBinding(listProjects, registerProject, scanProjects, deleteProject, activationRepo),
 		Activations:  binding.NewActivationBinding(activateSkill, deactivateSkill, resolveConflict, activationRepo),
 		Doctor:       binding.NewDoctorBinding(doctor, fixIssue),
 		Categories:   binding.NewCategoriesBinding(manageCategories, assignSkillCategory, associateProjectCategory, disassociateProjectCategory, categoryRepo),

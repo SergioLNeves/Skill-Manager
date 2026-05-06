@@ -6,7 +6,7 @@ import "time"
 type SkillSource string
 
 const (
-	SkillSourceGlobal  SkillSource = "global"
+	SkillSourceGitHub  SkillSource = "github"
 	SkillSourceProject SkillSource = "project"
 )
 
@@ -19,4 +19,9 @@ type Skill struct {
 	Source         SkillSource
 	OwnerProjectID string // non-empty only when Source == SkillSourceProject
 	UpdatedAt      time.Time
+
+	// GitHub-sourced fields (non-empty when Source == SkillSourceGitHub)
+	Repo    string // "owner/repo"
+	Ref     string // resolved commit SHA
+	SubPath string // path of skill dir relative to repo root
 }

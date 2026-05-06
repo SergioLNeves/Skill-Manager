@@ -71,7 +71,7 @@ function SkillView({ skill }: { skill: AggregatedSkill }) {
           )}
           {skill.isGlobal && (
             <Badge variant="outline" className="gap-1">
-              <Globe className="h-3 w-3" /> Global
+              <Globe className="h-3 w-3" /> GitHub
             </Badge>
           )}
         </div>

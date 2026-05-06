@@ -137,7 +137,7 @@ function SkillCard({
           {skill.isGlobal && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Globe className="h-3 w-3 shrink-0" />
-              <span className="font-medium text-foreground">Global</span>
+              <span className="font-medium text-foreground">GitHub</span>
             </div>
           )}
           {visibleProjects.map((p) => (
@@ -156,7 +156,7 @@ function SkillCard({
             <Badge variant="outline" className="text-[10px] py-0 h-4">{skill.categoryName}</Badge>
           )}
           {skill.isGlobal && (
-            <Badge variant="outline" className="text-[10px] py-0 h-4">global</Badge>
+            <Badge variant="outline" className="text-[10px] py-0 h-4">github</Badge>
           )}
           <Badge variant="secondary" className="text-[10px] py-0 h-4">
             {totalLocations} {totalLocations === 1 ? 'location' : 'locations'}
@@ -292,7 +292,7 @@ function DeleteModal({
   const [confirmed, setConfirmed] = useState(false)
 
   const locations = [
-    ...(skill.isGlobal ? [{ key: '__global__', label: 'Global', projectId: '' }] : []),
+    ...(skill.isGlobal ? [{ key: '__global__', label: 'GitHub (managed)', projectId: '' }] : []),
     ...skill.projects.map((p) => ({ key: p.id, label: p.name, projectId: p.id })),
   ]
 

@@ -34,7 +34,9 @@ func (r *ProjectSkillRepository) ListByProject(_ context.Context, project domain
 		skipSymlink bool
 	}{
 		{filepath.Join(project.Path, "skills"), false},
+		{filepath.Join(project.Path, ".skills", "cache"), false},
 		{filepath.Join(project.Path, ".claude", "skills"), true},
+		{filepath.Join(project.Path, ".github", "skills"), true},
 	}
 
 	for _, root := range roots {
@@ -62,7 +64,7 @@ func (r *ProjectSkillRepository) GetByID(ctx context.Context, id string, project
 		return domain.Skill{}, err
 	}
 	for _, s := range skills {
-		if s.ID == id {
+		if s.ID == id || s.Name == id {
 			return s, nil
 		}
 	}

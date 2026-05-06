@@ -120,9 +120,14 @@ function ProjectsPage() {
                   <p className="text-sm font-medium">{p.name}</p>
                   <p className="text-xs text-muted-foreground font-mono mt-0.5">{p.path}</p>
                   <div className="flex gap-1 mt-1">
-                    {p.detectedAgents.map((a) => (
-                      <Badge key={a} variant="secondary" className="text-xs">{a}</Badge>
-                    ))}
+                    {p.detectedAgents.map((a) => {
+                      const active = p.activeAgents?.includes(a)
+                      return (
+                        <Badge key={a} variant={active ? 'default' : 'secondary'} className="text-xs">
+                          {a}
+                        </Badge>
+                      )
+                    })}
                   </div>
                 </div>
                 <Button

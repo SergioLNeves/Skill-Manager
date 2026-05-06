@@ -30,13 +30,26 @@ func TestCopilotAdapter_ApplyGlobal(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestCopilotAdapter_ApplyProject(t *testing.T) {
-	t.Parallel()
-
+func makeTestSkills(t *testing.T) []domain.Skill {
+	t.Helper()
+	base := t.TempDir()
 	skills := []domain.Skill{
 		{Name: "go-review", Description: "Go code review checklist"},
 		{Name: "debug-tips", Description: "Debugging tips"},
 	}
+	for i, s := range skills {
+		dir := filepath.Join(base, s.Name)
+		require.NoError(t, os.MkdirAll(dir, 0o755))
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "SKILL.md"), []byte("# "+s.Name), 0o644))
+		skills[i].Path = dir
+	}
+	return skills
+}
+
+func TestCopilotAdapter_ApplyProject(t *testing.T) {
+	t.Parallel()
+
+	skills := makeTestSkills(t)
 
 	t.Run("creates file with managed block when file does not exist", func(t *testing.T) {
 		t.Parallel()

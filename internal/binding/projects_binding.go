@@ -11,12 +11,18 @@ import (
 	"skill-manager/internal/usecase"
 )
 
+// ActiveAgentsQuerier is the subset of ActivationRepository used by ProjectsBinding.
+type ActiveAgentsQuerier interface {
+	ListActiveAgents(ctx context.Context, projectID string) ([]domain.Agent, error)
+}
+
 // ProjectsBinding exposes project-related operations to the Wails frontend.
 type ProjectsBinding struct {
 	listProjects    *usecase.ListProjects
 	registerProject *usecase.RegisterProject
 	scanProjects    *usecase.ScanProjects
 	deleteProject   *usecase.DeleteProject
+	activeAgents    ActiveAgentsQuerier
 }
 
 func NewProjectsBinding(
@@ -24,16 +30,18 @@ func NewProjectsBinding(
 	register *usecase.RegisterProject,
 	scan *usecase.ScanProjects,
 	del *usecase.DeleteProject,
+	activeAgents ActiveAgentsQuerier,
 ) *ProjectsBinding {
 	return &ProjectsBinding{
 		listProjects:    list,
 		registerProject: register,
 		scanProjects:    scan,
 		deleteProject:   del,
+		activeAgents:    activeAgents,
 	}
 }
 
-// List returns all registered projects.
+// List returns all registered projects, including which agents have active skills.
 func (b *ProjectsBinding) List(ctx context.Context) ([]ProjectDTO, error) {
 	projects, err := b.listProjects.Execute(ctx)
 	if err != nil {
@@ -41,7 +49,14 @@ func (b *ProjectsBinding) List(ctx context.Context) ([]ProjectDTO, error) {
 	}
 	dtos := make([]ProjectDTO, len(projects))
 	for i, p := range projects {
-		dtos[i] = toProjectDTO(p)
+		dto := toProjectDTO(p)
+		if agents, err := b.activeAgents.ListActiveAgents(ctx, p.ID); err == nil {
+			dto.ActiveAgents = make([]string, len(agents))
+			for j, a := range agents {
+				dto.ActiveAgents[j] = string(a)
+			}
+		}
+		dtos[i] = dto
 	}
 	return dtos, nil
 }

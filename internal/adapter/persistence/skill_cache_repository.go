@@ -38,7 +38,7 @@ func (r *SkillCacheRepository) UpsertLocation(ctx context.Context, skillName, so
 }
 
 func (r *SkillCacheRepository) DeleteGlobalLocations(ctx context.Context) error {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM skill_locations WHERE source='global'`)
+	_, err := r.db.ExecContext(ctx, `DELETE FROM skill_locations WHERE source='github'`)
 	return err
 }
 
@@ -106,7 +106,7 @@ func (r *SkillCacheRepository) ListAggregated(ctx context.Context) ([]usecase.Ag
 			order = append(order, name)
 		}
 
-		if source == "global" {
+		if source == "github" {
 			agg.IsGlobal = true
 			agg.GlobalPath = path
 		} else if projectID != "" {

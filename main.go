@@ -2,20 +2,26 @@ package main
 
 import (
 	"embed"
+	"os"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+
+	"skill-manager/internal/cli"
 )
 
 //go:embed all:frontend/dist
 var assets embed.FS
 
 func main() {
-	// Create an instance of the app structure
+	// Dispatch CLI subcommands before starting the Wails window.
+	if len(os.Args) > 1 && os.Args[1] == "skills" {
+		os.Exit(cli.Run(os.Args[2:]))
+	}
+
 	app := NewApp()
 
-	// Create application with options
 	err := wails.Run(&options.App{
 		Title:  "skill-manager",
 		Width:  1024,

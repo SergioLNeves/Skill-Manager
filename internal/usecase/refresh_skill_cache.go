@@ -52,7 +52,7 @@ func (uc *RefreshSkillCache) Execute(ctx context.Context) error {
 		if err := uc.cache.UpsertSkill(ctx, name, s.Description, s.UpdatedAt); err != nil {
 			return fmt.Errorf("refresh cache: upsert global skill %s: %w", name, err)
 		}
-		if err := uc.cache.UpsertLocation(ctx, name, "global", "", s.Path); err != nil {
+		if err := uc.cache.UpsertLocation(ctx, name, "github", "", s.Path); err != nil {
 			return fmt.Errorf("refresh cache: upsert global location %s: %w", name, err)
 		}
 	}

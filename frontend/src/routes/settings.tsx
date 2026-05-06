@@ -106,6 +106,30 @@ function PathList({
   )
 }
 
+function SkillSourcesInfo() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Skill Sources (GitHub)</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Skills are installed per-project from GitHub repositories using the CLI.
+          Run the command below inside a project directory to install skills:
+        </p>
+        <pre className="rounded-md bg-muted px-4 py-3 text-sm font-mono">
+          {`skill-manager skills add <owner/repo> [--skill <name>] [--ref <branch>]`}
+        </pre>
+        <p className="text-sm text-muted-foreground">
+          Installed skills are stored in <code className="font-mono text-xs">.skills/cache/</code> and
+          tracked in <code className="font-mono text-xs">skills-lock.json</code> in the project directory.
+          Use <code className="font-mono text-xs">skill-manager skills sync</code> to restore them on another machine.
+        </p>
+      </CardContent>
+    </Card>
+  )
+}
+
 function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null)
   const [saving, setSaving] = useState(false)
@@ -146,12 +170,7 @@ function SettingsPage() {
         </p>
       </div>
 
-      <PathList
-        label="Global Skills"
-        description="Folders scanned recursively to discover skills available to all projects. Any subfolder containing a SKILL.md is recognized as a skill."
-        paths={settings.globalSkillSources}
-        onChange={(v) => setSettings({ ...settings, globalSkillSources: v })}
-      />
+      <SkillSourcesInfo />
 
       <PathList
         label="Workspace Roots"

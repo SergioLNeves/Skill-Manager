@@ -5,7 +5,7 @@ export interface Skill {
   categoryId: number | null
   categoryName: string
   path: string
-  source: 'global' | 'project'
+  source: 'github' | 'project'
   ownerProjectId: string
   ownerProjectName: string
   updatedAt: string
@@ -23,8 +23,8 @@ export interface AggregatedSkill {
   description: string
   categoryId: number | null
   categoryName: string
-  isGlobal: boolean
-  globalPath: string
+  isGlobal: boolean   // true when sourced from GitHub (installed via 'skills add')
+  globalPath: string  // local cache path for github-sourced skills
   projects: SkillProjectRef[]
   updatedAt: string
 }
@@ -83,6 +83,7 @@ export interface Project {
   name: string
   path: string
   detectedAgents: string[]
+  activeAgents: string[]  // agents with at least one active skill
   addedAt: string
 }
 
@@ -170,7 +171,7 @@ export interface Settings {
 export const AGENT_CLAUDE = 'claude'
 export const AGENT_COPILOT = 'copilot'
 
-export const SCOPE_GLOBAL = 'global'
+export const SCOPE_GLOBAL = 'global' // activation scope: not project-scoped
 export const SCOPE_PROJECT = 'project'
 
 export const RESOLUTION_KEEP_GLOBAL = 1 as const

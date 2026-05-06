@@ -28,7 +28,7 @@ export function ConflictModal({ conflict, onClose }: Props) {
         <div className="space-y-2 mb-6 text-sm">
           {conflict.globalActivation && (
             <div className="rounded-md border border-border px-3 py-2">
-              <span className="text-xs uppercase tracking-wide text-muted-foreground">Global</span>
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">Managed</span>
               <p className="mt-0.5">Active for all projects</p>
             </div>
           )}
@@ -49,7 +49,7 @@ export function ConflictModal({ conflict, onClose }: Props) {
             onClick={() => handle(RESOLUTION_KEEP_GLOBAL)}
             disabled={resolve.isPending}
           >
-            Keep Global
+            Keep Managed
           </Button>
           <Button
             onClick={() => handle(RESOLUTION_OVERRIDE_PROJECT)}

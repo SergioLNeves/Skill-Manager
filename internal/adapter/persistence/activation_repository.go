@@ -102,6 +102,28 @@ func (r *ActivationRepository) DeleteByProjectID(ctx context.Context, projectID 
 	return nil
 }
 
+// ListActiveAgents returns the distinct agents that have at least one project-scoped
+// activation for the given projectID.
+func (r *ActivationRepository) ListActiveAgents(ctx context.Context, projectID string) ([]domain.Agent, error) {
+	rows, err := r.db.QueryContext(ctx,
+		`SELECT DISTINCT agent FROM activations WHERE scope='project' AND project_id=? ORDER BY agent`,
+		projectID)
+	if err != nil {
+		return nil, fmt.Errorf("activation repo: list active agents for %s: %w", projectID, err)
+	}
+	defer rows.Close()
+
+	var agents []domain.Agent
+	for rows.Next() {
+		var a string
+		if err := rows.Scan(&a); err != nil {
+			return nil, err
+		}
+		agents = append(agents, domain.Agent(a))
+	}
+	return agents, rows.Err()
+}
+
 // FindConflict returns a Conflict when the same (skillID, agent) pair has both
 // a global activation and a project-scoped activation for the given projectID.
 func (r *ActivationRepository) FindConflict(ctx context.Context, skillID string, agent domain.Agent, projectID string) (*domain.Conflict, error) {

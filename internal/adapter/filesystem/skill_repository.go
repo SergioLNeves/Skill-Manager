@@ -35,7 +35,7 @@ func (r *SkillRepository) List(_ context.Context) ([]domain.Skill, error) {
 		for _, s := range found {
 			if !seen[s.ID] {
 				seen[s.ID] = true
-				s.Source = domain.SkillSourceGlobal
+				s.Source = domain.SkillSourceGitHub
 				skills = append(skills, s)
 			}
 		}
@@ -50,7 +50,7 @@ func (r *SkillRepository) GetByID(ctx context.Context, id string) (domain.Skill,
 		return domain.Skill{}, err
 	}
 	for _, s := range skills {
-		if s.ID == id {
+		if s.ID == id || s.Name == id {
 			return s, nil
 		}
 	}

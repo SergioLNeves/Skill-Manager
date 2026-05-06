@@ -2,11 +2,13 @@ package agent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"skill-manager/internal/adapter/filesystem"
 	"skill-manager/internal/domain"
 )
 
@@ -39,9 +41,13 @@ func (a *CopilotAdapter) ApplyGlobal(_ context.Context, _ []domain.Skill) error 
 	return nil
 }
 
-// ApplyProject regenerates the managed block inside copilot-instructions.md,
-// preserving any user content outside the markers.
-func (a *CopilotAdapter) ApplyProject(_ context.Context, project domain.Project, activeSkills []domain.Skill) error {
+// ApplyProject syncs <project>/.github/skills/ to match activeSkills (symlinks)
+// and regenerates the managed block inside copilot-instructions.md.
+func (a *CopilotAdapter) ApplyProject(ctx context.Context, project domain.Project, activeSkills []domain.Skill) error {
+	if err := a.syncSkillsDir(ctx, project.Path, activeSkills); err != nil {
+		return err
+	}
+
 	instructionsPath := filepath.Join(project.Path, copilotFilePath)
 
 	existing, err := os.ReadFile(instructionsPath)
@@ -56,6 +62,48 @@ func (a *CopilotAdapter) ApplyProject(_ context.Context, project domain.Project,
 	}
 	if err := os.WriteFile(instructionsPath, []byte(updated), 0o644); err != nil {
 		return fmt.Errorf("copilot adapter: write %s: %w", instructionsPath, err)
+	}
+	return nil
+}
+
+// syncSkillsDir syncs <projectPath>/.github/skills/ to exactly the active skills,
+// creating symlinks for new skills and removing stale ones.
+func (a *CopilotAdapter) syncSkillsDir(ctx context.Context, projectPath string, activeSkills []domain.Skill) error {
+	dir := filepath.Join(projectPath, ".github", "skills")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("copilot adapter: mkdir %s: %w", dir, err)
+	}
+
+	desired := make(map[string]domain.Skill, len(activeSkills))
+	for _, s := range activeSkills {
+		desired[s.Name] = s
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return fmt.Errorf("copilot adapter: readdir %s: %w", dir, err)
+	}
+	for _, e := range entries {
+		if e.Type()&os.ModeSymlink == 0 {
+			continue
+		}
+		if _, ok := desired[e.Name()]; !ok {
+			linkPath := filepath.Join(dir, e.Name())
+			if removeErr := os.Remove(linkPath); removeErr != nil {
+				return fmt.Errorf("copilot adapter: remove stale link %s: %w", linkPath, removeErr)
+			}
+		}
+	}
+
+	for name, skill := range desired {
+		linkPath := filepath.Join(dir, name)
+		skillMgr := filesystem.NewSymlinkManager(filepath.Dir(skill.Path))
+		if ensureErr := skillMgr.EnsureLink(ctx, skill.Path, linkPath); ensureErr != nil {
+			if errors.Is(ensureErr, filesystem.ErrTargetNotManaged) {
+				return fmt.Errorf("copilot adapter: link %s is occupied by an unmanaged path: %w", linkPath, ensureErr)
+			}
+			return fmt.Errorf("copilot adapter: ensure link %s: %w", linkPath, ensureErr)
+		}
 	}
 	return nil
 }

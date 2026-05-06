@@ -106,6 +106,7 @@ type ProjectDTO struct {
 	Name           string   `json:"name"`
 	Path           string   `json:"path"`
 	DetectedAgents []string `json:"detectedAgents"`
+	ActiveAgents   []string `json:"activeAgents"` // agents with at least one active skill
 	AddedAt        string   `json:"addedAt"`
 }
 
