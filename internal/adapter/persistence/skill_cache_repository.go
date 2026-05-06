@@ -30,8 +30,8 @@ func (r *SkillCacheRepository) UpsertSkill(ctx context.Context, name, descriptio
 
 func (r *SkillCacheRepository) UpsertLocation(ctx context.Context, skillName, source, projectID, path string) error {
 	_, err := r.db.ExecContext(ctx,
-		`INSERT INTO skill_locations(skill_name, source, project_id, path) VALUES(?,?,?,?)
-		 ON CONFLICT(skill_name, source, project_id) DO UPDATE SET path=excluded.path`,
+		`INSERT INTO skill_locations(skill_name, source, project_id, repo, path) VALUES(?,?,?,'',?)
+		 ON CONFLICT(skill_name, source, project_id, repo) DO UPDATE SET path=excluded.path`,
 		skillName, source, projectID, path,
 	)
 	return err

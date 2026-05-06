@@ -395,6 +395,7 @@ export namespace binding {
 	    name: string;
 	    path: string;
 	    detectedAgents: string[];
+	    activeAgents: string[];
 	    addedAt: string;
 	
 	    static createFrom(source: any = {}) {
@@ -407,6 +408,7 @@ export namespace binding {
 	        this.name = source["name"];
 	        this.path = source["path"];
 	        this.detectedAgents = source["detectedAgents"];
+	        this.activeAgents = source["activeAgents"];
 	        this.addedAt = source["addedAt"];
 	    }
 	}
