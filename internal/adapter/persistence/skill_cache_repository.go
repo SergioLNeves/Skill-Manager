@@ -37,8 +37,18 @@ func (r *SkillCacheRepository) UpsertLocation(ctx context.Context, skillName, so
 	return err
 }
 
+func (r *SkillCacheRepository) UpsertGitHubLocation(ctx context.Context, skillName, repo, ref, subPath, path string) error {
+	_, err := r.db.ExecContext(ctx,
+		`INSERT INTO skill_locations(skill_name, source, project_id, repo, ref, sub_path, path) VALUES(?,'github','',?,?,?,?)
+		 ON CONFLICT(skill_name, source, project_id, repo) DO UPDATE SET ref=excluded.ref, sub_path=excluded.sub_path, path=excluded.path`,
+		skillName, repo, ref, subPath, path,
+	)
+	return err
+}
+
 func (r *SkillCacheRepository) DeleteGlobalLocations(ctx context.Context) error {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM skill_locations WHERE source='github'`)
+	// Only remove filesystem-sourced rows (repo=''). GitHub-tarball rows (repo != '') are managed separately.
+	_, err := r.db.ExecContext(ctx, `DELETE FROM skill_locations WHERE source='github' AND repo=''`)
 	return err
 }
 

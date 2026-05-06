@@ -9,6 +9,8 @@ import (
 
 	"skill-manager/internal/adapter/agent"
 	"skill-manager/internal/adapter/filesystem"
+	"skill-manager/internal/adapter/managed"
+	githubfetcher "skill-manager/internal/adapter/github"
 	"skill-manager/internal/adapter/persistence"
 	"skill-manager/internal/binding"
 	"skill-manager/internal/domain"
@@ -25,7 +27,8 @@ type Container struct {
 	Doctor      *binding.DoctorBinding
 	Categories  *binding.CategoriesBinding
 
-	RefreshCache *usecase.RefreshSkillCache
+	RefreshCache        *usecase.RefreshSkillCache
+	InstallGitHubSkill  *usecase.InstallGitHubSkill
 }
 
 // Wire builds the full dependency graph and returns a ready Container.
@@ -35,21 +38,24 @@ func Wire(globalSkillSources []string, dbPath string) (*Container, error) {
 		return nil, err
 	}
 
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
+
+	// Include the global GitHub cache so skills installed from GitHub are resolvable by name.
+	githubCacheDir := filepath.Join(homeDir, ".skills-manager", "github-cache")
+	allSkillSources := append([]string{githubCacheDir}, globalSkillSources...)
+
 	// Repositories
-	skillRepo := filesystem.NewSkillRepository(afero.NewOsFs(), globalSkillSources...)
+	skillRepo := filesystem.NewSkillRepository(afero.NewOsFs(), allSkillSources...)
 	projectSkillRepo := filesystem.NewProjectSkillRepository(afero.NewOsFs())
 	projectRepo := persistence.NewProjectRepository(db)
 	activationRepo := persistence.NewActivationRepository(db)
 	projectScanner := filesystem.NewProjectScanner(afero.NewOsFs())
 	skillCacheRepo := persistence.NewSkillCacheRepository(db, projectRepo)
 	categoryRepo := persistence.NewCategoryRepository(db)
-
-	// Agent adapters
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		db.Close()
-		return nil, err
-	}
 	adapters := map[domain.Agent]usecase.AgentAdapter{
 		domain.AgentClaude:  agent.NewClaudeAdapter(homeDir),
 		domain.AgentCopilot: agent.NewCopilotAdapter(),
@@ -77,9 +83,13 @@ func Wire(globalSkillSources []string, dbPath string) (*Container, error) {
 	associateProjectCategory := usecase.NewAssociateProjectCategory(categoryRepo, projectRepo, activationRepo, skillRepo, projectSkillRepo, adapters)
 	disassociateProjectCategory := usecase.NewDisassociateProjectCategory(categoryRepo)
 
+	managedRepo := managed.NewSkillRepository(githubfetcher.NewFetcher())
+	installGitHubSkill := usecase.NewInstallGitHubSkill(managedRepo, skillCacheRepo, githubCacheDir)
+
 	return &Container{
-		DB:           db,
-		RefreshCache: refreshCache,
+		DB:                 db,
+		RefreshCache:       refreshCache,
+		InstallGitHubSkill: installGitHubSkill,
 		Skills:       binding.NewSkillsBinding(listSkills, listProjectSkills, listAllSkills, copySkill, deleteSkill, resetProjectSkills),
 		Projects:     binding.NewProjectsBinding(listProjects, registerProject, scanProjects, deleteProject, activationRepo),
 		Activations:  binding.NewActivationBinding(activateSkill, deactivateSkill, resolveConflict, activationRepo),

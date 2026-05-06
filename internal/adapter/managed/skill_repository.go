@@ -36,6 +36,50 @@ type InstallResult struct {
 	Skills []domain.Skill
 }
 
+// InstallGlobal downloads the GitHub repo to a global cache dir and returns the found skills.
+// Unlike Install it does NOT write a skills-lock.json.
+func (r *SkillRepository) InstallGlobal(ctx context.Context, cacheDir, repo, ref, skillName string) (InstallResult, error) {
+	if ref == "" {
+		ref = "main"
+	}
+
+	result, err := r.fetcher.Fetch(ctx, cacheDir, repo, ref)
+	if err != nil {
+		return InstallResult{}, fmt.Errorf("managed repo: fetch: %w", err)
+	}
+
+	skillDirs, err := findSkillDirs(result.ExtractDir, skillName)
+	if err != nil {
+		return InstallResult{}, fmt.Errorf("managed repo: find skills: %w", err)
+	}
+	if len(skillDirs) == 0 {
+		return InstallResult{}, fmt.Errorf("managed repo: no skill named %q found in %s", skillName, repo)
+	}
+
+	var skills []domain.Skill
+	for _, dir := range skillDirs {
+		name := filepath.Base(dir)
+		subPath, _ := filepath.Rel(result.ExtractDir, dir)
+
+		info, _ := os.Stat(dir)
+		var updatedAt time.Time
+		if info != nil {
+			updatedAt = info.ModTime()
+		}
+		skills = append(skills, domain.Skill{
+			Name:      name,
+			Path:      dir,
+			Source:    domain.SkillSourceGitHub,
+			UpdatedAt: updatedAt,
+			Repo:      repo,
+			SubPath:   filepath.ToSlash(subPath),
+			Ref:       result.SHA,
+		})
+	}
+
+	return InstallResult{Skills: skills}, nil
+}
+
 // Install downloads the GitHub repo and registers matching skills in the lock file.
 func (r *SkillRepository) Install(ctx context.Context, req InstallRequest) (InstallResult, error) {
 	if req.Ref == "" {

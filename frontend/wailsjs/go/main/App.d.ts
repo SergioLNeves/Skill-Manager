@@ -29,6 +29,8 @@ export function FixIssue(arg1:binding.DoctorIssueDTO):Promise<void>;
 
 export function GetSettings():Promise<config.Settings>;
 
+export function InstallGitHubSkill(arg1:string):Promise<Array<string>>;
+
 export function ListActivations(arg1:binding.ActivationFilterDTO):Promise<Array<binding.ActivationDTO>>;
 
 export function ListAllSkills():Promise<Array<binding.AggregatedSkillDTO>>;

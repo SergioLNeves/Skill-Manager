@@ -82,6 +82,16 @@ export function useProjectSkills(projectId: string): UseQueryResult<Skill[]> {
   })
 }
 
+export function useInstallGitHubSkill() {
+  const qc = useQueryClient()
+  return useMutation<string[], Error, string>({
+    mutationFn: api.installGitHubSkill,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.allSkills })
+    },
+  })
+}
+
 // --- Projects ---
 
 export function useProjects(): UseQueryResult<Project[]> {

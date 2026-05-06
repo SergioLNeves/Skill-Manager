@@ -54,6 +54,10 @@ export function GetSettings() {
   return window['go']['main']['App']['GetSettings']();
 }
 
+export function InstallGitHubSkill(arg1) {
+  return window['go']['main']['App']['InstallGitHubSkill'](arg1);
+}
+
 export function ListActivations(arg1) {
   return window['go']['main']['App']['ListActivations'](arg1);
 }

@@ -197,6 +197,19 @@ func (a *App) ResetProjectSkills(projectID string) error {
 	return a.container.Skills.ResetProjectSkills(a.ctx, projectID)
 }
 
+// InstallGitHubSkill installs a skill from GitHub into the global registry.
+// input accepts: "owner/repo", "owner/repo@ref", "npx skills add owner/repo [--ref X] [--skill Y]".
+func (a *App) InstallGitHubSkill(input string) ([]string, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
+	result, err := a.container.InstallGitHubSkill.Execute(a.ctx, input)
+	if err != nil {
+		return nil, err
+	}
+	return result.Skills, nil
+}
+
 // --- Projects ---
 
 func (a *App) ListProjects() ([]binding.ProjectDTO, error) {

@@ -62,6 +62,9 @@ export const api = {
   runDoctor: () => call<DoctorReport>('RunDoctor'),
   fixIssue: (issue: DoctorIssue) => call<void>('FixIssue', issue),
 
+  // GitHub install
+  installGitHubSkill: (input: string) => call<string[]>('InstallGitHubSkill', input),
+
   // Categories
   listCategories: () => call<Category[]>('ListCategories'),
   createCategory: (req: CreateCategoryRequest) => call<Category>('CreateCategory', req),
