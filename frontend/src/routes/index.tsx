@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
-import { Search, Copy, Trash2, Globe, FolderOpen } from 'lucide-react'
+import { Search, Copy, Trash2, Globe, FolderOpen, GitFork } from 'lucide-react'
 import { useAllSkills, useProjects, useCopySkill, useDeleteSkill } from '@/infra/queries'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { InstallFromGitHubModal } from '@/components/InstallFromGitHubModal'
 import type { AggregatedSkill } from '@/types'
 
 export const Route = createFileRoute('/')({
@@ -17,6 +18,7 @@ function SkillsPage() {
   const [search, setSearch] = useState('')
   const [copyTarget, setCopyTarget] = useState<AggregatedSkill | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<AggregatedSkill | null>(null)
+  const [showInstall, setShowInstall] = useState(false)
 
   const filtered = skills.filter((s) => {
     const q = search.toLowerCase()
@@ -39,9 +41,15 @@ function SkillsPage() {
             {skills.length} skill{skills.length !== 1 ? 's' : ''} found
           </p>
         </div>
-        <Link to="/categories" className="text-sm text-muted-foreground hover:text-foreground underline">
-          Manage categories →
-        </Link>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => setShowInstall(true)}>
+            <GitFork className="h-4 w-4 mr-1.5" />
+            Add from GitHub
+          </Button>
+          <Link to="/categories" className="text-sm text-muted-foreground hover:text-foreground underline">
+            Manage categories →
+          </Link>
+        </div>
       </div>
 
       <div className="relative">
@@ -82,6 +90,9 @@ function SkillsPage() {
       )}
       {deleteTarget && (
         <DeleteModal skill={deleteTarget} onClose={() => setDeleteTarget(null)} />
+      )}
+      {showInstall && (
+        <InstallFromGitHubModal onClose={() => setShowInstall(false)} />
       )}
     </div>
   )
